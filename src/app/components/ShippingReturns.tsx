@@ -1,4 +1,4 @@
-import { Package, Truck, RefreshCw, Clock, Shield, CheckCircle } from 'lucide-react';
+import { Package, Truck, RefreshCw, Clock, Shield, CheckCircle, MessageCircle } from 'lucide-react';
 
 export function ShippingReturns() {
     return (
@@ -179,6 +179,15 @@ export function ShippingReturns() {
                             className="px-8 py-3 bg-white hover:bg-gray-50 text-amber-700 border-2 border-amber-700 rounded-lg transition-colors font-medium"
                         >
                             Call Us
+                        </a>
+                        <a
+                            href="https://wa.me/25377243018"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                        >
+                            <MessageCircle size={18} />
+                            WhatsApp
                         </a>
                     </div>
                 </div>

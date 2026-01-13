@@ -1,4 +1,4 @@
-import { Instagram, Facebook, Twitter, Mail } from 'lucide-react';
+import { Instagram, Facebook, Twitter, Mail, MessageCircle } from 'lucide-react';
 
 interface FooterProps {
   onNavigate?: (page: 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide') => void;
@@ -26,6 +26,15 @@ export function Footer({ onNavigate }: FooterProps) {
               </a>
               <a href="#" className="hover:text-amber-500 transition">
                 <Twitter size={20} />
+              </a>
+              <a 
+                href="https://wa.me/25377243018" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-green-500 transition"
+                aria-label="Contact us on WhatsApp"
+              >
+                <MessageCircle size={20} />
               </a>
             </div>
           </div>

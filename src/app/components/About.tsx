@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, Instagram, Facebook, Twitter, MessageCircle } from 'lucide-react';
 
 export function About() {
     return (
@@ -128,6 +128,17 @@ export function About() {
                             <Phone size={20} />
                             <span>+1 (555) 123-4567</span>
                         </div>
+                        <div className="flex items-center gap-2">
+                            <MessageCircle size={20} />
+                            <a 
+                                href="https://wa.me/25377243018" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="hover:text-white transition-colors"
+                            >
+                                +253 77 24 30 18
+                            </a>
+                        </div>
                     </div>
                     <div className="flex justify-center gap-4 mt-8">
                         <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
@@ -138,6 +149,15 @@ export function About() {
                         </a>
                         <a href="#" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
                             <Twitter size={20} />
+                        </a>
+                        <a 
+                            href="https://wa.me/25377243018" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="w-12 h-12 bg-green-500/20 hover:bg-green-500/30 rounded-full flex items-center justify-center transition-colors"
+                            aria-label="Contact us on WhatsApp"
+                        >
+                            <MessageCircle size={20} />
                         </a>
                     </div>
                 </div>

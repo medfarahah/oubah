@@ -23,6 +23,7 @@ import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { SizeGuide } from './components/SizeGuide';
 import { UserProfile } from './components/UserProfile';
+import { WhatsAppButton } from './components/WhatsAppButton';
 
 type Page = 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide' | 'profile';
 
@@ -365,6 +366,8 @@ function AppInner() {
         onClose={() => setProductDetailOpen(false)}
         onAddToCart={addToCart}
       />
+
+      <WhatsAppButton />
     </div>
   );
 }

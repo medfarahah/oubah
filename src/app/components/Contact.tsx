@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Send, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Instagram, Facebook, Twitter, MessageCircle } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
@@ -129,6 +129,24 @@ export function Contact() {
                                 </div>
 
                                 <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <MessageCircle className="w-6 h-6 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">WhatsApp</h3>
+                                        <a 
+                                            href="https://wa.me/25377243018" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-gray-600 hover:text-green-600 transition-colors"
+                                        >
+                                            +253 77 24 30 18
+                                        </a>
+                                        <p className="text-sm text-gray-500">Available 24/7</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-start gap-4">
                                     <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <MapPin className="w-6 h-6 text-amber-700" />
                                     </div>
@@ -153,6 +171,15 @@ export function Contact() {
                                     </a>
                                     <a href="#" className="w-12 h-12 bg-amber-100 hover:bg-amber-200 rounded-full flex items-center justify-center transition-colors">
                                         <Twitter className="w-6 h-6 text-amber-700" />
+                                    </a>
+                                    <a 
+                                        href="https://wa.me/25377243018" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="w-12 h-12 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition-colors"
+                                        aria-label="Contact us on WhatsApp"
+                                    >
+                                        <MessageCircle className="w-6 h-6 text-green-600" />
                                     </a>
                                 </div>
                             </div>
