@@ -1,0 +1,26 @@
+{
+  "name": "NŪRA Collection - Luxury Modest Fashion",
+  "short_name": "NŪRA",
+  "description": "Discover elegant and luxurious hijabs, abayas, and modest fashion at NŪRA Collection",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#D97706",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["fashion", "shopping", "lifestyle"],
+  "lang": "en-US"
+}
