@@ -8,7 +8,7 @@ export interface Product {
   description: string;
   material?: string;
   colors?: string[];
-   sizes?: string[];
+  sizes?: string[];
   isNew?: boolean;
   sale?: boolean;
 }
@@ -45,4 +45,5 @@ export interface Order {
   shipping: number;
   total: number;
   orderDate: Date;
+  status: string;
 }

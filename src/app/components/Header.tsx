@@ -234,7 +234,12 @@ export function Header({
                       My Account
                     </button>
                     <button
-                      onClick={() => { logout(); setMobileMenuOpen(false); }}
+                      onClick={() => { 
+                        logout(); 
+                        setMobileMenuOpen(false);
+                        // Optional: Redirect to home (uncomment if needed)
+                        // window.location.href = '/';
+                      }}
                       className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
                     >
                       Logout

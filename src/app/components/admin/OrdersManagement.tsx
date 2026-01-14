@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatus } from '../../data/orders';
 import { Order } from '../../types';
 import { Eye, Package, Truck, CheckCircle, Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
+import { api } from '../../../lib/api';
 
 export function OrdersManagement() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
@@ -14,17 +15,73 @@ export function OrdersManagement() {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
-    const allOrders = getOrders();
-    setOrders(allOrders);
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getOrders();
+      if (response.success && response.data) {
+        // Convert API order format to frontend Order format
+        const convertedOrders: Order[] = response.data.map((o: any) => ({
+          id: o.id,
+          items: o.items?.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.product?.name || 'Unknown Product',
+            category: item.product?.category || 'General',
+            price: item.price,
+            originalPrice: item.product?.originalPrice,
+            image: item.product?.imageUrl || '/placeholder.jpg',
+            description: item.product?.description || '',
+            quantity: item.quantity,
+            size: item.size,
+          })) || [],
+          subtotal: o.subtotal || 0,
+          shipping: o.shipping || 0,
+          total: o.total || 0,
+          orderDate: o.createdAt ? new Date(o.createdAt) : new Date(),
+          status: o.status || 'pending',
+          shippingInfo: {
+            firstName: o.customerName ? o.customerName.split(' ')[0] : 'Unknown',
+            lastName: o.customerName ? o.customerName.split(' ').slice(1).join(' ') : 'Customer',
+            email: o.email || '',
+            phone: o.phone || '',
+            address: o.address || '',
+            apartment: o.apartment || '',
+            city: o.city || '',
+            state: o.state || '',
+            zipCode: o.zipCode || '',
+            country: o.country || '',
+          },
+          paymentInfo: {
+            paymentMethod: o.paymentMethod || 'cash'
+          }
+        }));
+        setOrders(convertedOrders);
+      } else {
+        toast.error(response.error || 'Failed to load orders');
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast.error('Failed to load orders');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStatusUpdate = (orderId: string, newStatus: string) => {
-    updateOrderStatus(orderId, newStatus);
-    loadOrders();
-    toast.success('Order status updated successfully');
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status: newStatus } as any);
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await api.updateOrder(orderId, { status: newStatus });
+      if (response.success) {
+        await loadOrders();
+        toast.success('Order status updated successfully');
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder({ ...selectedOrder, status: newStatus } as any);
+        }
+      } else {
+        toast.error(response.error || 'Failed to update order status');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
     }
   };
 
@@ -73,8 +130,8 @@ export function OrdersManagement() {
     }
   };
 
-  const filteredOrders = filterStatus === 'all' 
-    ? orders 
+  const filteredOrders = filterStatus === 'all'
+    ? orders
     : orders.filter((o) => (o as any).status === filterStatus);
 
   const statusOptions = [
@@ -102,19 +159,17 @@ export function OrdersManagement() {
             <button
               key={option.value}
               onClick={() => setFilterStatus(option.value)}
-              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                filterStatus === option.value
+              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${filterStatus === option.value
                   ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg shadow-amber-500/30'
                   : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-              }`}
+                }`}
             >
               {option.label}
               {option.value !== 'all' && (
-                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  filterStatus === option.value
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${filterStatus === option.value
                     ? 'bg-white/20 text-white'
                     : 'bg-gray-200 text-gray-600'
-                }`}>
+                  }`}>
                   {option.count}
                 </span>
               )}
@@ -144,15 +199,14 @@ export function OrdersManagement() {
               const statusConfig = getStatusConfig(status);
               const StatusIcon = statusConfig.icon;
               const isSelected = selectedOrder?.id === order.id;
-              
+
               return (
                 <div
                   key={order.id}
-                  className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all duration-200 hover:shadow-md ${
-                    isSelected
+                  className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all duration-200 hover:shadow-md ${isSelected
                       ? 'border-amber-500 shadow-lg shadow-amber-500/20'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                   onClick={() => setSelectedOrder(order)}
                 >
                   <div className="flex items-start justify-between mb-4">
@@ -174,7 +228,7 @@ export function OrdersManagement() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Items</p>
@@ -230,11 +284,10 @@ export function OrdersManagement() {
                           <button
                             key={option.value}
                             onClick={() => handleStatusUpdate(selectedOrder.id, option.value)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                              isCurrent
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${isCurrent
                                 ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md'
                                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                            }`}
+                              }`}
                           >
                             <Icon size={14} />
                             {option.label}

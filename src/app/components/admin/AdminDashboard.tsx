@@ -147,7 +147,11 @@ export function AdminDashboard() {
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              // Redirect to home after logout
+              window.location.href = '/';
+            }}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 group"
           >
             <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />

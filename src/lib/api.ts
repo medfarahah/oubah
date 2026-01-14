@@ -1,361 +1,172 @@
-// Frontend API client utility
-// Uses import.meta.env.VITE_API_URL from environment variables
-// If not set, uses relative paths (same origin) for Vercel serverless functions
-// For local dev with Vercel: run `vercel dev` to test API routes
-// For production: set VITE_API_URL to your Vercel domain (or leave empty for same origin)
 
-const API_URL = ((import.meta as any).env?.VITE_API_URL as string) || '';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-  count?: number;
+interface ApiError {
+    success: false;
+    error: string;
 }
 
-// Helper function for API calls
-async function apiRequest<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<ApiResponse<T>> {
-  try {
-    const url = `${API_URL}${endpoint}`;
-    console.log('API Request:', url); // Debug log
-    
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
+interface ApiSuccess<T> {
+    success: true;
+    data: T;
+    count?: number;
+}
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
-    }
+type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('API request error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
-    // More helpful error messages
-    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-      return {
-        success: false,
-        error: 'Cannot connect to server. For local dev, run `vercel dev`. For production, ensure API is deployed.',
-      };
-    }
-    
-    return {
-      success: false,
-      error: errorMessage,
-    };
+// For local dev: use Express server at localhost:3000
+// For production: use empty string to use same-origin (Vercel serverless functions)
+// If VITE_API_URL is not set or empty, use relative paths for Vercel
+const getApiUrl = () => {
+  const envUrl = (import.meta as any).env?.VITE_API_URL as string;
+  if (!envUrl || envUrl === '') {
+    // Empty or not set - use relative paths for Vercel serverless functions
+    return '';
   }
+  // Use the provided URL (e.g., http://localhost:3000 for local dev)
+  return envUrl;
+};
+
+const API_URL = getApiUrl();
+
+async function request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+    try {
+        // Endpoints already include /api prefix, so use as-is
+        const url = `${API_URL}${endpoint}`;
+        // Debug: Log the request details in development
+        console.log('API Request:', { method: options.method || 'GET', url, endpoint, API_URL });
+        
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        };
+
+        const response = await fetch(url, {
+            ...options,
+            headers,
+        });
+
+        // Check if response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text.substring(0, 200));
+            return {
+                success: false,
+                error: `API endpoint not found or returned HTML. Endpoint: ${endpoint}`,
+            };
+        }
+
+        const data = await response.json();
+        
+        // If response has error status, return error
+        if (!response.ok) {
+            return {
+                success: false,
+                error: data.error || data.message || `HTTP ${response.status}`,
+            };
+        }
+
+        return data;
+    } catch (error) {
+        console.error('API Request Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        // Check for JSON parse errors
+        if (errorMessage.includes('Unexpected token') || errorMessage.includes('JSON')) {
+            return {
+                success: false,
+                error: 'Server returned invalid response. API endpoint may not exist.',
+            };
+        }
+
+        // Check for connection failure
+        if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+            return {
+                success: false,
+                error: 'Cannot connect to server. Ensure backend is running.',
+            };
+        }
+
+        return {
+            success: false,
+            error: errorMessage,
+        };
+    }
 }
 
-// API functions
 export const api = {
-  // Health check
-  async checkHealth() {
-    return apiRequest<{ status: string; message: string; timestamp: string }>('/api/health');
-  },
+    // Health check
+    checkHealth: () => request<{ status: string; message: string; timestamp: string }>('/api/health'),
 
-  // Products
-  async getProducts() {
-    return apiRequest<Array<{
-      id: string;
-      name: string;
-      price: number;
-      imageUrl: string;
-      createdAt: string;
-    }>>('/api/products');
-  },
+    // Auth
+    register: (data: any) => request<any>('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    login: (data: any) => request<any>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
 
-  async createProduct(product: {
-    name: string;
-    price: number;
-    imageUrl: string;
-    category?: string;
-    originalPrice?: number;
-    description?: string;
-    material?: string;
-    colors?: string[];
-    sizes?: string[];
-    isNew?: boolean;
-    sale?: boolean;
-  }) {
-    return apiRequest<{
-      id: string;
-      name: string;
-      price: number;
-      imageUrl: string;
-      createdAt: string;
-    }>('/api/products', {
-      method: 'POST',
-      body: JSON.stringify(product),
-    });
-  },
+    // Products
+    getProducts: () => request<any[]>('/api/products'),
+    getProduct: (id: string) => request<any>(`/api/products/${id}`),
+    createProduct: (data: any) => request<any>('/api/products', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    updateProduct: (id: string, data: any) => request<any>(`/api/products/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    deleteProduct: (id: string) => request<any>(`/api/products/${id}`, {
+        method: 'DELETE',
+    }),
 
-  async getProduct(id: string) {
-    return apiRequest<{
-      id: string;
-      name: string;
-      price: number;
-      imageUrl: string;
-      category: string | null;
-      originalPrice: number | null;
-      description: string | null;
-      material: string | null;
-      colors: string[];
-      sizes: string[];
-      isNew: boolean | null;
-      sale: boolean | null;
-      createdAt: string;
-    }>(`/api/products/${id}`);
-  },
+    // Orders
+    getOrders: () => request<any[]>('/api/orders'),
+    getOrder: (id: string) => request<any>(`/api/orders/${id}`),
+    createOrder: (data: any) => request<any>('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    updateOrder: (id: string, data: any) => request<any>(`/api/orders/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
 
-  async updateProduct(id: string, product: {
-    name?: string;
-    price?: number;
-    imageUrl?: string;
-    category?: string;
-    originalPrice?: number;
-    description?: string;
-    material?: string;
-    colors?: string[];
-    sizes?: string[];
-    isNew?: boolean;
-    sale?: boolean;
-  }) {
-    return apiRequest<{
-      id: string;
-      name: string;
-      price: number;
-      imageUrl: string;
-      createdAt: string;
-    }>(`/api/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(product),
-    });
-  },
+    // Settings
+    getSettings: () => request<any>('/api/settings'),
+    updateSetting: (data: any) => request<any>('/api/settings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
 
-  async deleteProduct(id: string) {
-    return apiRequest<{ message: string }>(`/api/products/${id}`, {
-      method: 'DELETE',
-    });
-  },
-
-  // Orders
-  async getOrders(filters?: { email?: string; status?: string }) {
-    const params = new URLSearchParams();
-    if (filters?.email) params.append('email', filters.email);
-    if (filters?.status) params.append('status', filters.status);
-    const query = params.toString();
-    return apiRequest<Array<{
-      id: string;
-      customer: string;
-      phone: string;
-      email: string | null;
-      total: number;
-      status: string | null;
-      createdAt: string;
-    }>>(`/api/orders${query ? `?${query}` : ''}`);
-  },
-
-  async getOrder(id: string) {
-    return apiRequest<{
-      id: string;
-      customer: string;
-      phone: string;
-      email: string | null;
-      total: number;
-      status: string | null;
-      createdAt: string;
-    }>(`/api/orders/${id}`);
-  },
-
-  async createOrder(order: {
-    customer: string;
-    phone: string;
-    total: number;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    address?: string;
-    apartment?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-    deliveryNotes?: string;
-    paymentMethod?: string;
-    subtotal?: number;
-    shipping?: number;
-    items?: any;
-    status?: string;
-  }) {
-    return apiRequest<{
-      id: string;
-      customer: string;
-      phone: string;
-      total: number;
-      createdAt: string;
-    }>('/api/orders', {
-      method: 'POST',
-      body: JSON.stringify(order),
-    });
-  },
-
-  async updateOrder(id: string, order: {
-    status?: string;
-    customer?: string;
-    phone?: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    address?: string;
-    apartment?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-    deliveryNotes?: string;
-    paymentMethod?: string;
-    subtotal?: number;
-    shipping?: number;
-    total?: number;
-    items?: any;
-  }) {
-    return apiRequest<{
-      id: string;
-      customer: string;
-      phone: string;
-      total: number;
-      status: string | null;
-      createdAt: string;
-    }>(`/api/orders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(order),
-    });
-  },
-
-  // Auth
-  async register(userData: {
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-  }) {
-    return apiRequest<{
-      id: string;
-      email: string;
-      name: string | null;
-      phone: string | null;
-      role: string;
-      address: string | null;
-      apartment: string | null;
-      city: string | null;
-      state: string | null;
-      zipCode: string | null;
-      country: string | null;
-      createdAt: string;
-    }>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-  },
-
-  async login(credentials: {
-    email: string;
-    password: string;
-  }) {
-    return apiRequest<{
-      id: string;
-      email: string;
-      name: string | null;
-      phone: string | null;
-      role: string;
-      address: string | null;
-      apartment: string | null;
-      city: string | null;
-      state: string | null;
-      zipCode: string | null;
-      country: string | null;
-      createdAt: string;
-    }>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-  },
-
-  async getCurrentUser(userId: string) {
-    return apiRequest<{
-      id: string;
-      email: string;
-      name: string | null;
-      phone: string | null;
-      role: string;
-      address: string | null;
-      apartment: string | null;
-      city: string | null;
-      state: string | null;
-      zipCode: string | null;
-      country: string | null;
-      createdAt: string;
-    }>(`/api/auth/me?userId=${userId}`);
-  },
-
-  async forgotPassword(email: string) {
-    return apiRequest<{
-      message?: string;
-    }>('/api/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  },
-
-  async updateProfile(userId: string, profile: {
-    name?: string;
-    phone?: string;
-    address?: string;
-    apartment?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  }) {
-    return apiRequest<{
-      id: string;
-      email: string;
-      name: string | null;
-      phone: string | null;
-      role: string;
-      address: string | null;
-      apartment: string | null;
-      city: string | null;
-      state: string | null;
-      zipCode: string | null;
-      country: string | null;
-      createdAt: string;
-    }>('/api/auth/profile', {
-      method: 'PUT',
-      body: JSON.stringify({ userId, ...profile }),
-    });
-  },
-
-  async updatePassword(userId: string, passwords: {
-    currentPassword: string;
-    newPassword: string;
-  }) {
-    return apiRequest<{
-      message: string;
-    }>('/api/auth/password', {
-      method: 'PUT',
-      body: JSON.stringify({ userId, ...passwords }),
-    });
-  },
+    // Addresses
+    getAddresses: (userId: string) => request<any[]>(`/api/addresses?userId=${userId}`),
+    createAddress: (data: any) => request<any>('/api/addresses', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    }),
+    updateAddress: (id: string, data: any) => request<any>(`/api/addresses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    deleteAddress: (id: string) => request<any>(`/api/addresses/${id}`, {
+        method: 'DELETE',
+    }),
+    setDefaultAddress: async (id: string) => {
+        // First get the address to check if it exists and get userId
+        const getResponse = await request<any>(`/api/addresses/${id}`);
+        if (!getResponse.success || !getResponse.data) {
+            return getResponse;
+        }
+        // Then update it with isDefault: true (this will unset other defaults)
+        return request<any>(`/api/addresses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ isDefault: true }),
+        });
+    },
 };

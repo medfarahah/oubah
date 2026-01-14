@@ -2,7 +2,7 @@
 // PUT /api/products/[id] - Update product
 // DELETE /api/products/[id] - Delete product
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../../server/lib/prisma.js';
 
 export default async function handler(
   request: VercelRequest,
@@ -19,79 +19,53 @@ export default async function handler(
   const { id } = request.query;
 
   if (!id || typeof id !== 'string') {
-    return response.status(400).json({
-      success: false,
-      error: 'Product ID is required',
-    });
+    return response.status(400).json({ success: false, error: 'Product ID is required' });
   }
 
   try {
     if (request.method === 'GET') {
       const product = await prisma.product.findUnique({
         where: { id },
+        include: { inventory: true }
       });
-
       if (!product) {
-        return response.status(404).json({
-          success: false,
-          error: 'Product not found',
-        });
+        return response.status(404).json({ success: false, error: 'Product not found' });
       }
-
-      return response.status(200).json({
-        success: true,
-        data: product,
-      });
+      return response.json({ success: true, data: product });
     }
 
     if (request.method === 'PUT') {
-      const { name, price, imageUrl, category, originalPrice, description, material, colors, sizes, isNew, sale } = request.body;
+      const { stock, ...data } = request.body;
 
       const product = await prisma.product.update({
         where: { id },
-        data: {
-          ...(name && { name }),
-          ...(price !== undefined && { price }),
-          ...(imageUrl && { imageUrl }),
-          ...(category !== undefined && { category }),
-          ...(originalPrice !== undefined && { originalPrice }),
-          ...(description !== undefined && { description }),
-          ...(material !== undefined && { material }),
-          ...(colors && { colors }),
-          ...(sizes && { sizes }),
-          ...(isNew !== undefined && { isNew }),
-          ...(sale !== undefined && { sale }),
-        },
+        data: data,
       });
 
-      return response.status(200).json({
-        success: true,
-        data: product,
-        message: 'Product updated successfully',
+      if (stock !== undefined) {
+        await prisma.inventory.upsert({
+          where: { productId: product.id },
+          create: { productId: product.id, quantity: stock },
+          update: { quantity: stock }
+        });
+      }
+
+      const updatedProduct = await prisma.product.findUnique({
+        where: { id },
+        include: { inventory: true }
       });
+
+      return response.json({ success: true, data: updatedProduct });
     }
 
     if (request.method === 'DELETE') {
-      await prisma.product.delete({
-        where: { id },
-      });
-
-      return response.status(200).json({
-        success: true,
-        message: 'Product deleted successfully',
-      });
+      await prisma.product.delete({ where: { id } });
+      return response.json({ success: true, message: 'Product deleted' });
     }
 
-    return response.status(405).json({
-      success: false,
-      error: 'Method not allowed',
-    });
+    return response.status(405).json({ success: false, error: 'Method not allowed' });
   } catch (error) {
     console.error('Product API error:', error);
-    return response.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return response.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

@@ -1,3 +1,4 @@
+
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 
@@ -78,16 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = response.data;
       setUser({
         id: userData.id,
-        name: userData.name || name || email.split('@')[0] || 'Customer',
+        name: userData.name || name || email.split('@')[0],
         email: userData.email,
         phone: userData.phone,
         role: userData.role === 'admin' ? 'admin' : 'customer',
-        address: userData.address,
-        apartment: userData.apartment,
-        city: userData.city,
-        state: userData.state,
-        zipCode: userData.zipCode,
-        country: userData.country,
       });
     } else {
       throw new Error(response.error || 'Registration failed');
@@ -95,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const adminLogin = async (email: string, password: string) => {
-    // Try to login - if user has admin role, it will work
     const response = await api.login({ email, password });
     if (response.success && response.data) {
       const userData = response.data;
@@ -104,14 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.id,
           name: userData.name || 'Admin',
           email: userData.email,
-          phone: userData.phone,
+          email: userData.email, // duplicate key, but harmless
           role: 'admin',
-          address: userData.address,
-          apartment: userData.apartment,
-          city: userData.city,
-          state: userData.state,
-          zipCode: userData.zipCode,
-          country: userData.country,
         });
       } else {
         throw new Error('Access denied. Admin privileges required.');
@@ -122,7 +110,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setUser(null);
+    try {
+      // Explicitly clear localStorage first
+      localStorage.removeItem(STORAGE_KEY);
+      // Clear user state
+      setUser(null);
+      console.log('User logged out successfully');
+      
+      // Optional: Reload page to ensure clean state (uncomment if needed)
+      // window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force clear even if there's an error
+      localStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+    }
   };
 
   const isAdmin = () => {
@@ -143,4 +145,3 @@ export function useAuth() {
   }
   return ctx;
 }
-

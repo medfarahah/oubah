@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getOrders } from '../../data/orders';
-import { getProducts } from '../../data/products';
 import { ShoppingBag, Package, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { api } from '../../../lib/api';
 
 export function DashboardOverview() {
   const [stats, setStats] = useState({
@@ -12,23 +11,42 @@ export function DashboardOverview() {
     revenueChange: 12.5,
     ordersChange: 8.2,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const orders = getOrders();
-    const products = getProducts();
-    const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    setStats({
-      totalOrders,
-      totalRevenue,
-      totalProducts: products.length,
-      averageOrderValue,
-      revenueChange: 12.5,
-      ordersChange: 8.2,
-    });
+    loadStats();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const [ordersResponse, productsResponse] = await Promise.all([
+        api.getOrders(),
+        api.getProducts(),
+      ]);
+
+      if (ordersResponse.success && ordersResponse.data && productsResponse.success && productsResponse.data) {
+        const orders = ordersResponse.data;
+        const products = productsResponse.data;
+        const totalOrders = orders.length;
+        const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+        setStats({
+          totalOrders,
+          totalRevenue,
+          totalProducts: products.length,
+          averageOrderValue,
+          revenueChange: 12.5,
+          ordersChange: 8.2,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   type StatCard = {
     title: string;

@@ -1,31 +1,113 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Store, Mail, CreditCard, Shield, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { api } from '../../../lib/api';
+
+interface Settings {
+  storeName: string;
+  storeEmail: string;
+  storePhone: string;
+  storeAddress: string;
+  currency: string;
+  taxRate: number;
+  freeShippingThreshold: number;
+  shippingCost: number;
+  enableNotifications: boolean;
+  enableEmailNotifications: boolean;
+}
+
+const defaultSettings: Settings = {
+  storeName: 'NŪRA Collection',
+  storeEmail: 'info@nura.com',
+  storePhone: '+1 (555) 123-4567',
+  storeAddress: '123 Fashion Street, New York, NY 10001',
+  currency: 'USD',
+  taxRate: 8.5,
+  freeShippingThreshold: 150,
+  shippingCost: 15,
+  enableNotifications: true,
+  enableEmailNotifications: true,
+};
 
 export function SettingsManagement() {
-  const [settings, setSettings] = useState({
-    storeName: 'NŪRA Collection',
-    storeEmail: 'info@nura.com',
-    storePhone: '+1 (555) 123-4567',
-    storeAddress: '123 Fashion Street, New York, NY 10001',
-    currency: 'USD',
-    taxRate: 8.5,
-    freeShippingThreshold: 150,
-    shippingCost: 15,
-    enableNotifications: true,
-    enableEmailNotifications: true,
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    localStorage.setItem('nura_settings', JSON.stringify(settings));
-    toast.success('Settings saved successfully');
+  // Fetch settings from database
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
+        const response = await api.getSettings();
+        if (response.success && response.data) {
+          // Merge fetched settings with defaults
+          setSettings({ ...defaultSettings, ...response.data });
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+        toast.error('Failed to load settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      
+      // Save each setting to the database
+      const settingKeys: (keyof Settings)[] = [
+        'storeName',
+        'storeEmail',
+        'storePhone',
+        'storeAddress',
+        'currency',
+        'taxRate',
+        'freeShippingThreshold',
+        'shippingCost',
+        'enableNotifications',
+        'enableEmailNotifications',
+      ];
+
+      const savePromises = settingKeys.map(async (key) => {
+        const value = settings[key];
+        const type = typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : 'string';
+        
+        return api.updateSetting({
+          key,
+          value,
+          type,
+          description: `Store setting: ${key}`,
+        });
+      });
+
+      await Promise.all(savePromises);
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: keyof Settings, value: any) => {
     setSettings({ ...settings, [key]: value });
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-gray-500">Loading settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -189,10 +271,11 @@ export function SettingsManagement() {
       <div className="flex justify-end">
         <Button
           onClick={handleSave}
-          className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-lg shadow-amber-500/30 px-8"
+          disabled={saving}
+          className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-lg shadow-amber-500/30 px-8 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save size={20} className="mr-2" />
-          Save All Settings
+          {saving ? 'Saving...' : 'Save All Settings'}
         </Button>
       </div>
     </div>

@@ -1,18 +1,55 @@
-import { useState } from 'react';
-import { setProducts, getProducts } from '../../data/products';
+import { useState, useEffect } from 'react';
 import { Product } from '../../types';
 import { Plus, Edit, Trash2, X, Save, Search, Filter, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { api } from '../../../lib/api';
 
 export function ProductsManagement() {
-  const [products, setProductsState] = useState<Product[]>(getProducts());
+  const [products, setProductsState] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Product>>({});
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getProducts();
+      if (response.success && response.data) {
+        // Convert API product format to frontend Product format
+        const convertedProducts: Product[] = response.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category || '',
+          price: p.price,
+          image: p.imageUrl || p.image,
+          description: p.description || '',
+          material: p.material,
+          colors: p.colors || [],
+          sizes: p.sizes || ['One Size'],
+          isNew: p.isNew || false,
+          sale: p.sale || false,
+          originalPrice: p.originalPrice,
+        }));
+        setProductsState(convertedProducts);
+      } else {
+        toast.error(response.error || 'Failed to load products');
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast.error('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAdd = () => {
     setFormData({
@@ -35,52 +72,82 @@ export function ProductsManagement() {
     setIsAdding(false);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      const updated = products.filter((p) => p.id !== id);
-      setProductsState(updated);
-      setProducts(updated);
-      toast.success('Product deleted successfully');
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+    try {
+      const response = await api.deleteProduct(id);
+      if (response.success) {
+        setProductsState(products.filter((p) => p.id !== id));
+        toast.success('Product deleted successfully');
+      } else {
+        toast.error(response.error || 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('Failed to delete product');
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.category || !formData.price || !formData.image) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    if (isAdding) {
-      const newProduct: Product = {
-        id: formData.id!,
-        name: formData.name!,
-        category: formData.category!,
-        price: formData.price!,
-        image: formData.image!,
-        description: formData.description || '',
-        material: formData.material,
-        colors: formData.colors || [],
-        sizes: formData.sizes || ['One Size'],
-        isNew: formData.isNew,
-        sale: formData.sale,
-        originalPrice: formData.originalPrice,
-      };
-      const updated = [...products, newProduct];
-      setProductsState(updated);
-      setProducts(updated);
-      toast.success('Product added successfully');
-    } else if (editingId) {
-      const updated = products.map((p) =>
-        p.id === editingId ? { ...p, ...formData } : p
-      );
-      setProductsState(updated);
-      setProducts(updated);
-      toast.success('Product updated successfully');
-    }
+    try {
+      if (isAdding) {
+        const response = await api.createProduct({
+          name: formData.name!,
+          price: formData.price!,
+          imageUrl: formData.image!,
+          category: formData.category!,
+          description: formData.description,
+          material: formData.material,
+          colors: formData.colors || [],
+          sizes: formData.sizes || ['One Size'],
+          isNew: formData.isNew || false,
+          sale: formData.sale || false,
+          originalPrice: formData.originalPrice,
+        });
 
-    setIsAdding(false);
-    setEditingId(null);
-    setFormData({});
+        if (response.success && response.data) {
+          await loadProducts(); // Reload products from API
+          toast.success('Product added successfully');
+        } else {
+          toast.error(response.error || 'Failed to add product');
+        }
+      } else if (editingId) {
+        const response = await api.updateProduct(editingId, {
+          name: formData.name,
+          price: formData.price,
+          imageUrl: formData.image,
+          category: formData.category,
+          description: formData.description,
+          material: formData.material,
+          colors: formData.colors,
+          sizes: formData.sizes,
+          isNew: formData.isNew,
+          sale: formData.sale,
+          originalPrice: formData.originalPrice,
+        });
+
+        if (response.success && response.data) {
+          await loadProducts(); // Reload products from API
+          toast.success('Product updated successfully');
+        } else {
+          toast.error(response.error || 'Failed to update product');
+        }
+      }
+
+      setIsAdding(false);
+      setEditingId(null);
+      setFormData({});
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast.error('Failed to save product');
+    }
   };
 
   const handleCancel = () => {
@@ -535,7 +602,13 @@ export function ProductsManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <p className="text-gray-600 font-medium">Loading products...</p>
+                  </td>
+                </tr>
+              ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center">
                     <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
