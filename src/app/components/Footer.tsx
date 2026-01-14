@@ -28,7 +28,7 @@ export function Footer({ onNavigate }: FooterProps) {
                 <Twitter size={20} />
               </a>
               <a 
-                href="https://wa.me/25377243018" 
+                href="https://wa.me/25377213018" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="hover:text-green-500 transition"

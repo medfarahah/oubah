@@ -131,12 +131,12 @@ export function About() {
                         <div className="flex items-center gap-2">
                             <MessageCircle size={20} />
                             <a 
-                                href="https://wa.me/25377243018" 
+                                href="https://wa.me/25377213018" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="hover:text-white transition-colors"
                             >
-                                +253 77 24 30 18
+                                +253 77 21 30 18
                             </a>
                         </div>
                     </div>
@@ -151,7 +151,7 @@ export function About() {
                             <Twitter size={20} />
                         </a>
                         <a 
-                            href="https://wa.me/25377243018" 
+                            href="https://wa.me/25377213018" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="w-12 h-12 bg-green-500/20 hover:bg-green-500/30 rounded-full flex items-center justify-center transition-colors"

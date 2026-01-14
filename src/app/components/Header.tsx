@@ -1,17 +1,30 @@
-import { ShoppingBag, Search, Heart, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Search, Heart, Menu, X, User, ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../auth';
 
 interface HeaderProps {
   onCartClick: () => void;
   cartItemsCount: number;
+  onWishlistClick?: () => void;
   onAuthClick?: () => void;
   onTrackOrderClick?: () => void;
   onAdminClick?: () => void;
   onNavigate?: (page: 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide' | 'profile') => void;
+  currentPage?: 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide' | 'profile';
+  wishlistCount?: number;
 }
 
-export function Header({ onCartClick, cartItemsCount, onAuthClick, onTrackOrderClick, onAdminClick, onNavigate }: HeaderProps) {
+export function Header({
+  onCartClick,
+  cartItemsCount,
+  onWishlistClick,
+  onAuthClick,
+  onTrackOrderClick,
+  onAdminClick,
+  onNavigate,
+  currentPage,
+  wishlistCount,
+}: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
 
@@ -78,23 +91,55 @@ export function Header({ onCartClick, cartItemsCount, onAuthClick, onTrackOrderC
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            {/* Mobile back button (only when not on home) */}
+            {currentPage && currentPage !== 'home' && (
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate?.('home');
+                  setMobileMenuOpen(false);
+                }}
+                className="sm:hidden p-2 -mr-1 text-gray-700 hover:text-amber-700 transition-colors touch-manipulation"
+                aria-label="Back to home"
+              >
+                <ChevronLeft size={22} />
+              </button>
+            )}
+
+            {/* Profile icon button */}
             <button
-              onClick={user ? () => { onNavigate?.('profile'); setMobileMenuOpen(false); } : () => { onAuthClick?.(); setMobileMenuOpen(false); }}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border border-gray-200 rounded-full text-xs hover:border-amber-700 hover:text-amber-700 transition-colors touch-manipulation"
+              onClick={
+                user
+                  ? () => {
+                      onNavigate?.('profile');
+                      setMobileMenuOpen(false);
+                    }
+                  : () => {
+                      onAuthClick?.();
+                      setMobileMenuOpen(false);
+                    }
+              }
+              className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 text-gray-700 hover:border-amber-700 hover:text-amber-700 bg-white shadow-sm hover:shadow-md transition-all touch-manipulation"
+              aria-label={user ? 'Open profile' : 'Sign in'}
             >
-              <User size={14} className="sm:w-4 sm:h-4" />
-              <span className="hidden md:inline">
-                {user ? `Hi, ${user.name?.split(' ')[0] || user.name}` : 'Sign in / Join'}
-              </span>
-              <span className="md:hidden">
-                {user ? 'Account' : 'Sign in'}
-              </span>
+              <User size={18} className="sm:w-5 sm:h-5" />
             </button>
+
             <button className="hidden sm:block p-2 hover:text-amber-700 transition-colors touch-manipulation" aria-label="Search">
               <Search size={18} className="sm:w-5 sm:h-5" />
             </button>
-            <button className="hidden sm:block p-2 hover:text-amber-700 transition-colors touch-manipulation" aria-label="Wishlist">
+            <button
+              className="hidden sm:block p-2 hover:text-amber-700 transition-colors relative touch-manipulation"
+              aria-label="Wishlist"
+              type="button"
+              onClick={onWishlistClick}
+            >
               <Heart size={18} className="sm:w-5 sm:h-5" />
+              {wishlistCount !== undefined && wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-700 text-white text-[10px] sm:text-xs w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-semibold">
+                  {wishlistCount > 9 ? '9+' : wishlistCount}
+                </span>
+              )}
             </button>
             <button
               onClick={onCartClick}

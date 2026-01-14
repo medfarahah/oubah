@@ -6,9 +6,17 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, size?: string) => void;
   onProductClick: (product: Product) => void;
+  onToggleWishlist?: (product: Product) => void;
+  isWishlisted?: boolean;
 }
 
-export function ProductCard({ product, onAddToCart, onProductClick }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onAddToCart,
+  onProductClick,
+  onToggleWishlist,
+  isWishlisted,
+}: ProductCardProps) {
   return (
     <div className="group cursor-pointer">
       <div className="relative overflow-hidden bg-gray-50 aspect-[3/4] mb-4">
@@ -34,8 +42,21 @@ export function ProductCard({ product, onAddToCart, onProductClick }: ProductCar
 
         {/* Quick actions */}
         <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="bg-white p-2 hover:bg-amber-700 hover:text-white transition-colors">
-            <Heart size={18} />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWishlist?.(product);
+            }}
+            className={`bg-white p-2 rounded-full shadow-sm hover:bg-amber-700 hover:text-white transition-colors ${
+              isWishlisted ? 'text-amber-700' : ''
+            }`}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart
+              size={18}
+              className={isWishlisted ? 'fill-amber-700 text-amber-700' : ''}
+            />
           </button>
         </div>
 

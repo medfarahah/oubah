@@ -43,11 +43,7 @@ export function Checkout({
   });
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
-    cardNumber: '',
-    cardHolderName: user?.name || '',
-    expiryDate: '',
-    cvv: '',
-    paymentMethod: 'card',
+    paymentMethod: 'waafi',
   });
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -70,28 +66,7 @@ export function Checkout({
   };
 
   const validatePayment = (): boolean => {
-    if (paymentInfo.paymentMethod === 'card') {
-      if (!paymentInfo.cardNumber || !paymentInfo.cardHolderName || !paymentInfo.expiryDate || !paymentInfo.cvv) {
-        toast.error('Please fill in all payment details');
-        return false;
-      }
-      // Basic card number validation (16 digits)
-      const cardNumber = paymentInfo.cardNumber.replace(/\s/g, '');
-      if (!/^\d{16}$/.test(cardNumber)) {
-        toast.error('Please enter a valid 16-digit card number');
-        return false;
-      }
-      // Expiry date validation (MM/YY)
-      if (!/^\d{2}\/\d{2}$/.test(paymentInfo.expiryDate)) {
-        toast.error('Please enter expiry date in MM/YY format');
-        return false;
-      }
-      // CVV validation (3-4 digits)
-      if (!/^\d{3,4}$/.test(paymentInfo.cvv)) {
-        toast.error('Please enter a valid CVV');
-        return false;
-      }
-    }
+    // Both payment methods (waafi and cash) are valid for delivery
     return true;
   };
 
@@ -167,37 +142,11 @@ export function Checkout({
         deliveryNotes: '',
       });
       setPaymentInfo({
-        cardNumber: '',
-        cardHolderName: user?.name || '',
-        expiryDate: '',
-        cvv: '',
-        paymentMethod: 'card',
+        paymentMethod: 'waafi',
       });
     }, 3000);
   };
 
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\D/g, '');
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
-  };
 
   if (!isOpen) return null;
 
@@ -415,7 +364,7 @@ export function Checkout({
               </div>
 
               <div className="space-y-3">
-                {(['card', 'paypal', 'cash'] as const).map((method) => (
+                {(['waafi', 'cash'] as const).map((method) => (
                   <button
                     key={method}
                     onClick={() => setPaymentInfo({ ...paymentInfo, paymentMethod: method })}
@@ -438,78 +387,18 @@ export function Checkout({
                         )}
                       </div>
                       <CreditCard size={20} className="text-gray-600" />
-                      <span className="font-medium capitalize">{method === 'card' ? 'Credit/Debit Card' : method === 'paypal' ? 'PayPal' : 'Cash on Delivery'}</span>
+                      <span className="font-medium">
+                        {method === 'waafi' ? 'WAAFI on Delivery' : 'Cash on Delivery'}
+                      </span>
                     </div>
                   </button>
                 ))}
               </div>
 
-              {paymentInfo.paymentMethod === 'card' && (
-                <div className="space-y-4 pt-4 border-t">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Card Number *</label>
-                    <Input
-                      value={paymentInfo.cardNumber}
-                      onChange={(e) =>
-                        setPaymentInfo({
-                          ...paymentInfo,
-                          cardNumber: formatCardNumber(e.target.value),
-                        })
-                      }
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={19}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Cardholder Name *</label>
-                    <Input
-                      value={paymentInfo.cardHolderName}
-                      onChange={(e) =>
-                        setPaymentInfo({ ...paymentInfo, cardHolderName: e.target.value })
-                      }
-                      placeholder="John Doe"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Expiry Date *</label>
-                      <Input
-                        value={paymentInfo.expiryDate}
-                        onChange={(e) =>
-                          setPaymentInfo({
-                            ...paymentInfo,
-                            expiryDate: formatExpiryDate(e.target.value),
-                          })
-                        }
-                        placeholder="MM/YY"
-                        maxLength={5}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">CVV *</label>
-                      <Input
-                        type="password"
-                        value={paymentInfo.cvv}
-                        onChange={(e) =>
-                          setPaymentInfo({
-                            ...paymentInfo,
-                            cvv: e.target.value.replace(/\D/g, '').slice(0, 4),
-                          })
-                        }
-                        placeholder="123"
-                        maxLength={4}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {paymentInfo.paymentMethod === 'paypal' && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    You will be redirected to PayPal to complete your payment after review.
+              {paymentInfo.paymentMethod === 'waafi' && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">
+                    Payment will be processed via WAAFI upon delivery. Please have your WAAFI account ready.
                   </p>
                 </div>
               )}
@@ -579,12 +468,8 @@ export function Checkout({
               {/* Payment Info */}
               <div className="border rounded-lg p-4 space-y-2">
                 <h4 className="font-semibold">Payment Method</h4>
-                <p className="text-sm text-gray-600 capitalize">
-                  {paymentInfo.paymentMethod === 'card'
-                    ? `Card ending in ${paymentInfo.cardNumber.slice(-4)}`
-                    : paymentInfo.paymentMethod === 'paypal'
-                    ? 'PayPal'
-                    : 'Cash on Delivery'}
+                <p className="text-sm text-gray-600">
+                  {paymentInfo.paymentMethod === 'waafi' ? 'WAAFI on Delivery' : 'Cash on Delivery'}
                 </p>
               </div>
 

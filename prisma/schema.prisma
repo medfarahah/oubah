@@ -1,0 +1,83 @@
+// Prisma schema for Vercel serverless functions
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  name          String
+  price         Float
+  imageUrl      String    @map("image_url")
+  // Optional extra fields to match the frontend Product type
+  category      String?
+  originalPrice Float?    @map("original_price")
+  description   String?
+  material      String?
+  colors        String[]
+  sizes         String[]
+  isNew         Boolean?  @map("is_new")
+  sale          Boolean?  @map("sale")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("products")
+}
+
+model Order {
+  id        String   @id @default(cuid())
+
+  // Basic customer info
+  customer  String
+  phone     String
+  email     String?
+
+  // Shipping info (matches ShippingInfo in frontend)
+  firstName     String? @map("first_name")
+  lastName      String? @map("last_name")
+  address       String?
+  apartment     String?
+  city          String?
+  state         String?
+  zipCode       String? @map("zip_code")
+  country       String?
+  deliveryNotes String? @map("delivery_notes")
+
+  // Payment info
+  paymentMethod String? @map("payment_method")
+
+  // Order monetary totals
+  subtotal Float?
+  shipping Float?
+  total    Float
+
+  // Order items as JSON (array of CartItem from frontend)
+  items Json?
+
+  // Status & timestamps
+  status    String?  @default("processing")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("orders")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  // Saved profile address for the user
+  address       String?
+  apartment     String?
+  city          String?
+  state         String?
+  zipCode       String? @map("zip_code")
+  country       String?
+  role      String   @default("customer") // e.g. "customer" or "admin"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}

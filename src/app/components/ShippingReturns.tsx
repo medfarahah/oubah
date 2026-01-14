@@ -181,7 +181,7 @@ export function ShippingReturns() {
                             Call Us
                         </a>
                         <a
-                            href="https://wa.me/25377243018"
+                            href="https://wa.me/25377213018"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"

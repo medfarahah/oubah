@@ -33,11 +33,7 @@ export interface ShippingInfo {
 }
 
 export interface PaymentInfo {
-  cardNumber: string;
-  cardHolderName: string;
-  expiryDate: string;
-  cvv: string;
-  paymentMethod: 'card' | 'paypal' | 'cash';
+  paymentMethod: 'waafi' | 'cash';
 }
 
 export interface Order {

@@ -135,12 +135,12 @@ export function Contact() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">WhatsApp</h3>
                                         <a 
-                                            href="https://wa.me/25377243018" 
+                                            href="https://wa.me/25377213018" 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="text-gray-600 hover:text-green-600 transition-colors"
                                         >
-                                            +253 77 24 30 18
+                                            +253 77 21 30 18
                                         </a>
                                         <p className="text-sm text-gray-500">Available 24/7</p>
                                     </div>
@@ -173,7 +173,7 @@ export function Contact() {
                                         <Twitter className="w-6 h-6 text-amber-700" />
                                     </a>
                                     <a 
-                                        href="https://wa.me/25377243018" 
+                                        href="https://wa.me/25377213018" 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="w-12 h-12 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition-colors"

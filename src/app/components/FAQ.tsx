@@ -24,7 +24,7 @@ export function FAQ() {
                 },
                 {
                     question: 'What payment methods do you accept?',
-                    answer: 'We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and Apple Pay. All transactions are secure and encrypted.',
+                    answer: 'We accept WAAFI on delivery and Cash on delivery. Payment will be collected when your order is delivered.',
                 },
                 {
                     question: 'Can I modify or cancel my order?',
@@ -202,7 +202,7 @@ export function FAQ() {
                             Call Us
                         </a>
                         <a
-                            href="https://wa.me/25377243018"
+                            href="https://wa.me/25377213018"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"

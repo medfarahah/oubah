@@ -41,7 +41,11 @@ export function AuthModal({ isOpen, mode, onClose, onModeChange }: AuthModalProp
       setPassword('');
     } catch (err) {
       console.error(err);
-      setError('Something went wrong. Please try again.');
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

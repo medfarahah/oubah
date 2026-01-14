@@ -24,6 +24,7 @@ import { TermsOfService } from './components/TermsOfService';
 import { SizeGuide } from './components/SizeGuide';
 import { UserProfile } from './components/UserProfile';
 import { WhatsAppButton } from './components/WhatsAppButton';
+import { WishlistDrawer } from './components/WishlistDrawer';
 
 type Page = 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide' | 'profile';
 
@@ -34,12 +35,14 @@ function AppInner() {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [trackOpen, setTrackOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productDetailOpen, setProductDetailOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
 
   // Check if admin is logged in - show admin dashboard
   if (isAdmin()) {
@@ -94,6 +97,19 @@ function AppInner() {
   };
 
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistCount = wishlistIds.length;
+
+  const toggleWishlist = (product: Product) => {
+    setWishlistIds((prev) => {
+      const exists = prev.includes(product.id);
+      if (exists) {
+        toast.success('Removed from wishlist');
+        return prev.filter((id) => id !== product.id);
+      }
+      toast.success('Added to wishlist');
+      return [...prev, product.id];
+    });
+  };
 
   const handleCheckout = () => {
     setCartOpen(false);
@@ -110,6 +126,20 @@ function AppInner() {
   const filteredProducts = filterCategory && filterCategory !== 'All'
     ? products.filter((p) => p.category === filterCategory)
     : products;
+  const newArrivals = products.filter((p) => p.isNew);
+  const hijabProducts = products.filter((p) =>
+    p.category.toUpperCase().includes('HIJABS'),
+  );
+  const abayaProducts = products.filter((p) =>
+    p.category.toUpperCase().includes('ABAYAS'),
+  );
+  const accessoryProducts = products.filter((p) =>
+    p.category.toUpperCase().includes('ACCESSORIES'),
+  );
+  const saleProducts = products.filter(
+    (p) => p.sale || (p.originalPrice && p.originalPrice > p.price),
+  );
+  const wishlistItems = products.filter((p) => wishlistIds.includes(p.id));
 
   // Render different pages based on currentPage state
   const renderPageContent = () => {
@@ -165,15 +195,142 @@ function AppInner() {
                 </div>
 
                 {/* Products Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
                   {filteredProducts.map((product) => (
                     <ProductCard
                       key={product.id}
                       product={product}
                       onAddToCart={addToCart}
                       onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
                     />
                   ))}
+                </div>
+              </div>
+            </section>
+
+            {/* New Arrivals */}
+            <section id="new" className="py-12 sm:py-16 lg:py-20 bg-white">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif">
+                    New Arrivals
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+                  {newArrivals.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Hijabs */}
+            <section id="hijabs" className="py-12 sm:py-16 lg:py-20 bg-amber-50/30">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif">
+                    Hijabs
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+                  {hijabProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Abayas */}
+            <section id="abayas" className="py-12 sm:py-16 lg:py-20 bg-white">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif">
+                    Abayas
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+                  {abayaProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Accessories */}
+            <section id="accessories" className="py-12 sm:py-16 lg:py-20 bg-amber-50/30">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif">
+                    Accessories
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+                  {accessoryProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
+                    />
+                  ))}
+                  {accessoryProducts.length === 0 && (
+                    <p className="text-gray-500 col-span-full">
+                      Accessories coming soon.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Sale */}
+            <section id="sale" className="py-12 sm:py-16 lg:py-20 bg-white">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif">
+                    Sale
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
+                  {saleProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      onProductClick={handleProductClick}
+                      onToggleWishlist={toggleWishlist}
+                      isWishlisted={wishlistIds.includes(product.id)}
+                    />
+                  ))}
+                  {saleProducts.length === 0 && (
+                    <p className="text-gray-500 col-span-full">
+                      No products on sale right now.
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -313,6 +470,9 @@ function AppInner() {
       <Header
         onCartClick={() => setCartOpen(true)}
         cartItemsCount={cartItemsCount}
+        currentPage={currentPage}
+        wishlistCount={wishlistCount}
+        onWishlistClick={() => setWishlistOpen(true)}
         onAuthClick={() => {
           setAuthMode('login');
           setAuthOpen(true);
@@ -351,6 +511,16 @@ function AppInner() {
           setAuthOpen(true);
         }}
         onCheckout={handleCheckout}
+      />
+
+      <WishlistDrawer
+        isOpen={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+        items={wishlistItems}
+        onAddToCart={(product) => addToCart(product)}
+        onRemoveFromWishlist={(productId) =>
+          setWishlistIds((prev) => prev.filter((id) => id !== productId))
+        }
       />
 
       <Checkout
