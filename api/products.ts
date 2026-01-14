@@ -1,7 +1,7 @@
 // GET /api/products - Get all products
 // POST /api/products - Create a new product
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.js';
 
 export default async function handler(
   request: VercelRequest,

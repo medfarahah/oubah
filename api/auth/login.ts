@@ -1,6 +1,7 @@
 // POST /api/auth/login - Login user
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../../lib/prisma';
+import bcrypt from 'bcryptjs';
+import { prisma } from '../../lib/prisma.js';
 
 export default async function handler(
   request: VercelRequest,
@@ -55,7 +56,9 @@ export default async function handler(
         state: true,
         zipCode: true,
         country: true,
+        country: true,
         createdAt: true,
+        password: true,
       },
     });
 
@@ -66,13 +69,22 @@ export default async function handler(
       });
     }
 
-    // In a real app, you'd verify the password hash here
-    // For now, we'll just check if user exists
-    // TODO: Add password hashing with bcrypt
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return response.status(401).json({
+        success: false,
+        error: 'Invalid email or password',
+      });
+    }
+
+    // Remove password from response
+    const { password: _, ...userWithoutPassword } = user;
 
     return response.status(200).json({
       success: true,
-      data: user,
+      data: userWithoutPassword,
       message: 'Login successful',
     });
   } catch (error) {

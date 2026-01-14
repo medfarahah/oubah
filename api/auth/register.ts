@@ -1,6 +1,7 @@
 // POST /api/auth/register - Register a new user
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { prisma } from '../../lib/prisma';
+import bcrypt from 'bcryptjs';
+import { prisma } from '../../lib/prisma.js';
 
 export default async function handler(
   request: VercelRequest,
@@ -52,11 +53,14 @@ export default async function handler(
       });
     }
 
-    // Create user (in a real app, you'd hash the password)
-    // For now, we'll store it as-is (NOT SECURE - you should use bcrypt)
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
     const user = await prisma.user.create({
       data: {
         email,
+        password: hashedPassword,
         name: name || null,
         phone: phone || null,
         role: 'customer',

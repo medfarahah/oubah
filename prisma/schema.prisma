@@ -77,6 +77,7 @@ model User {
   zipCode       String? @map("zip_code")
   country       String?
   role      String   @default("customer") // e.g. "customer" or "admin"
+  password  String
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("users")

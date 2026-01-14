@@ -79,6 +79,14 @@ export const api = {
     name: string;
     price: number;
     imageUrl: string;
+    category?: string;
+    originalPrice?: number;
+    description?: string;
+    material?: string;
+    colors?: string[];
+    sizes?: string[];
+    isNew?: boolean;
+    sale?: boolean;
   }) {
     return apiRequest<{
       id: string;
@@ -92,11 +100,103 @@ export const api = {
     });
   },
 
+  async getProduct(id: string) {
+    return apiRequest<{
+      id: string;
+      name: string;
+      price: number;
+      imageUrl: string;
+      category: string | null;
+      originalPrice: number | null;
+      description: string | null;
+      material: string | null;
+      colors: string[];
+      sizes: string[];
+      isNew: boolean | null;
+      sale: boolean | null;
+      createdAt: string;
+    }>(`/api/products/${id}`);
+  },
+
+  async updateProduct(id: string, product: {
+    name?: string;
+    price?: number;
+    imageUrl?: string;
+    category?: string;
+    originalPrice?: number;
+    description?: string;
+    material?: string;
+    colors?: string[];
+    sizes?: string[];
+    isNew?: boolean;
+    sale?: boolean;
+  }) {
+    return apiRequest<{
+      id: string;
+      name: string;
+      price: number;
+      imageUrl: string;
+      createdAt: string;
+    }>(`/api/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(product),
+    });
+  },
+
+  async deleteProduct(id: string) {
+    return apiRequest<{ message: string }>(`/api/products/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
   // Orders
+  async getOrders(filters?: { email?: string; status?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.email) params.append('email', filters.email);
+    if (filters?.status) params.append('status', filters.status);
+    const query = params.toString();
+    return apiRequest<Array<{
+      id: string;
+      customer: string;
+      phone: string;
+      email: string | null;
+      total: number;
+      status: string | null;
+      createdAt: string;
+    }>>(`/api/orders${query ? `?${query}` : ''}`);
+  },
+
+  async getOrder(id: string) {
+    return apiRequest<{
+      id: string;
+      customer: string;
+      phone: string;
+      email: string | null;
+      total: number;
+      status: string | null;
+      createdAt: string;
+    }>(`/api/orders/${id}`);
+  },
+
   async createOrder(order: {
     customer: string;
     phone: string;
     total: number;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    address?: string;
+    apartment?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    deliveryNotes?: string;
+    paymentMethod?: string;
+    subtotal?: number;
+    shipping?: number;
+    items?: any;
+    status?: string;
   }) {
     return apiRequest<{
       id: string;
@@ -106,6 +206,39 @@ export const api = {
       createdAt: string;
     }>('/api/orders', {
       method: 'POST',
+      body: JSON.stringify(order),
+    });
+  },
+
+  async updateOrder(id: string, order: {
+    status?: string;
+    customer?: string;
+    phone?: string;
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    address?: string;
+    apartment?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    deliveryNotes?: string;
+    paymentMethod?: string;
+    subtotal?: number;
+    shipping?: number;
+    total?: number;
+    items?: any;
+  }) {
+    return apiRequest<{
+      id: string;
+      customer: string;
+      phone: string;
+      total: number;
+      status: string | null;
+      createdAt: string;
+    }>(`/api/orders/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(order),
     });
   },
@@ -182,6 +315,47 @@ export const api = {
     }>('/api/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
+    });
+  },
+
+  async updateProfile(userId: string, profile: {
+    name?: string;
+    phone?: string;
+    address?: string;
+    apartment?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  }) {
+    return apiRequest<{
+      id: string;
+      email: string;
+      name: string | null;
+      phone: string | null;
+      role: string;
+      address: string | null;
+      apartment: string | null;
+      city: string | null;
+      state: string | null;
+      zipCode: string | null;
+      country: string | null;
+      createdAt: string;
+    }>('/api/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify({ userId, ...profile }),
+    });
+  },
+
+  async updatePassword(userId: string, passwords: {
+    currentPassword: string;
+    newPassword: string;
+  }) {
+    return apiRequest<{
+      message: string;
+    }>('/api/auth/password', {
+      method: 'PUT',
+      body: JSON.stringify({ userId, ...passwords }),
     });
   },
 };
