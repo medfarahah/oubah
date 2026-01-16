@@ -51,7 +51,7 @@ export function AdminLogin({ onSuccess, onBack }: AdminLoginProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@nura.com"
+                placeholder="admin@yourstore.com"
                 className="pl-10"
                 required
               />
@@ -73,11 +73,7 @@ export function AdminLogin({ onSuccess, onBack }: AdminLoginProps) {
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-            <p className="font-medium mb-1">Demo Credentials:</p>
-            <p>Email: admin@nura.com</p>
-            <p>Password: admin123</p>
-          </div>
+
 
           <Button
             type="submit"

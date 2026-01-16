@@ -64,7 +64,7 @@ export function WishlistDrawer({
                 >
                   <div className="w-20 h-24 sm:w-24 sm:h-32 bg-gray-100 flex-shrink-0 rounded overflow-hidden">
                     <ImageWithFallback
-                      src={item.image}
+                      src={item.imageUrl}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />

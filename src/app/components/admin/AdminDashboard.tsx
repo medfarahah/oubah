@@ -1,21 +1,23 @@
 import { useState } from 'react';
 import { useAuth } from '../../auth';
-import { LayoutDashboard, Package, ShoppingBag, Users, LogOut, Menu, X, Settings, Bell, Search, Tag, BarChart3, FileText, Warehouse } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, LogOut, Menu, X, Settings, Bell, Search, Tag, BarChart3, FileText, Warehouse, Users } from 'lucide-react';
 import { ProductsManagement } from './ProductsManagement';
 import { OrdersManagement } from './OrdersManagement';
-import { CustomersManagement } from './CustomersManagement';
 import { DashboardOverview } from './DashboardOverview';
 import { CategoriesManagement } from './CategoriesManagement';
 import { InventoryManagement } from './InventoryManagement';
 import { SalesAnalytics } from './SalesAnalytics';
 import { ReportsManagement } from './ReportsManagement';
 import { SettingsManagement } from './SettingsManagement';
+import { CustomersManagement } from './CustomersManagement';
+import { OrderDetailsPage } from './OrderDetailsPage';
 
-type AdminPage = 'dashboard' | 'products' | 'categories' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'reports' | 'settings';
+type AdminPage = 'dashboard' | 'products' | 'categories' | 'inventory' | 'orders' | 'customers' | 'analytics' | 'reports' | 'settings' | 'orderDetails';
 
 export function AdminDashboard() {
   const { logout, user } = useAuth();
   const [currentPage, setCurrentPage] = useState<AdminPage>('dashboard');
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const menuGroups = [
@@ -25,14 +27,9 @@ export function AdminDashboard() {
         { id: 'dashboard' as AdminPage, label: 'Overview', icon: LayoutDashboard },
         { id: 'products' as AdminPage, label: 'Products', icon: Package },
         { id: 'categories' as AdminPage, label: 'Categories', icon: Tag },
-        { id: 'inventory' as AdminPage, label: 'Inventory', icon: Warehouse },
-      ]
-    },
-    {
-      label: 'Management',
-      items: [
         { id: 'orders' as AdminPage, label: 'Orders', icon: ShoppingBag },
         { id: 'customers' as AdminPage, label: 'Customers', icon: Users },
+        { id: 'inventory' as AdminPage, label: 'Inventory', icon: Warehouse },
       ]
     },
     {
@@ -61,7 +58,28 @@ export function AdminDashboard() {
       case 'inventory':
         return <InventoryManagement />;
       case 'orders':
-        return <OrdersManagement />;
+        return (
+          <OrdersManagement
+            onViewDetails={(id) => {
+              setSelectedOrderId(id);
+              setCurrentPage('orderDetails');
+            }}
+          />
+        );
+      case 'orderDetails':
+        return selectedOrderId ? (
+          <OrderDetailsPage
+            orderId={selectedOrderId}
+            onBack={() => setCurrentPage('orders')}
+          />
+        ) : (
+          <OrdersManagement
+            onViewDetails={(id) => {
+              setSelectedOrderId(id);
+              setCurrentPage('orderDetails');
+            }}
+          />
+        );
       case 'customers':
         return <CustomersManagement />;
       case 'analytics':
@@ -110,7 +128,7 @@ export function AdminDashboard() {
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentPage === item.id;
+                  const isActive = currentPage === item.id || (item.id === 'orders' && currentPage === 'orderDetails');
                   return (
                     <button
                       key={item.id}
@@ -119,8 +137,8 @@ export function AdminDashboard() {
                         if (window.innerWidth < 1024) setSidebarOpen(false);
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group relative ${isActive
-                          ? 'bg-amber-500/10 text-amber-500 font-semibold'
-                          : 'hover:bg-slate-800/50 hover:text-white'
+                        ? 'bg-amber-500/10 text-amber-500 font-semibold'
+                        : 'hover:bg-slate-800/50 hover:text-white'
                         }`}
                     >
                       <Icon size={18} className={`${isActive ? 'text-amber-500' : 'text-slate-400 group-hover:text-slate-300'} transition-colors`} />
@@ -171,12 +189,12 @@ export function AdminDashboard() {
             >
               <Menu size={20} />
             </button>
-            <div className="hidden md:flex items-center bg-slate-100/80 px-4 py-2 rounded-xl border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-amber-500/20 focus-within:border-amber-500/30 transition-all w-80">
-              <Search className="text-slate-400 mr-2.5" size={16} />
+            <div className="hidden md:flex items-center bg-slate-100 px-5 py-2.5 rounded-full border border-slate-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-amber-500/10 focus-within:border-amber-500/30 transition-all w-96">
+              <Search className="text-slate-400 mr-3" size={18} />
               <input
                 type="text"
                 placeholder="Search..."
-                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-400"
+                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-400 font-medium"
               />
             </div>
           </div>
@@ -198,10 +216,10 @@ export function AdminDashboard() {
                 <p className="text-xs font-bold text-slate-900 leading-none">Admin Panel</p>
                 <p className="text-[10px] text-emerald-500 font-bold uppercase mt-1 tracking-wider">Online</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 p-[2px] shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-                <div className="w-full h-full bg-white rounded-[9px] flex items-center justify-center">
-                  <span className="text-amber-600 font-black text-xs">
-                    {user?.email?.charAt(0).toUpperCase() || 'A'}
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 p-[2px] shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
+                  <span className="text-amber-600 font-black text-sm">
+                    {user?.name?.charAt(0).toUpperCase() || 'A'}
                   </span>
                 </div>
               </div>
@@ -216,12 +234,12 @@ export function AdminDashboard() {
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                 {menuGroups.flatMap(g => g.items).find(m => m.id === currentPage)?.label || 'Overview'}
               </h2>
-              <div className="flex items-center gap-2 mt-2 text-sm text-slate-500 font-medium">
-                <span>NŪRA</span>
-                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                <span>Admin</span>
-                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                <span className="text-slate-900">
+              <div className="flex items-center gap-2 mt-2 text-[13px] text-slate-400 font-bold">
+                <span className="tracking-wide">NŪRA</span>
+                <span className="text-slate-300">•</span>
+                <span className="tracking-wide">Admin</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-900 tracking-wide">
                   {menuGroups.flatMap(g => g.items).find(m => m.id === currentPage)?.label || 'Overview'}
                 </span>
               </div>

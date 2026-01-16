@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../auth';
-import { User, Package, MapPin, Heart, Settings, LogOut, Edit2, Trash2, Plus, X, Eye } from 'lucide-react';
-import { getOrders } from '../data/orders';
+import { User, Package, MapPin, Heart, Settings, LogOut, Edit2, Trash2, Plus, X, Eye, ShoppingBag } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
@@ -41,6 +40,8 @@ interface DBAddress {
 export function UserProfile() {
     const { user, logout } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('overview');
+    const [userOrders, setUserOrders] = useState<any[]>([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [wishlist, setWishlist] = useState<string[]>([]);
     const [showAddressForm, setShowAddressForm] = useState(false);
@@ -48,8 +49,58 @@ export function UserProfile() {
     const [showOrderDetail, setShowOrderDetail] = useState<string | null>(null);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
 
-    const orders = getOrders();
-    const userOrders = orders.filter(order => order.customerEmail === user?.email);
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full">
+                    <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif mb-2">Login Required</h2>
+                    <p className="text-gray-600 mb-6">Please log in to view and manage your profile, orders, and addresses.</p>
+                    <Button onClick={() => window.location.href = '/'} className="bg-amber-700 hover:bg-amber-800 w-full">
+                        Return to Shop
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const [profileData, setProfileData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || ''
+    });
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    // Fetch orders from API
+    useEffect(() => {
+        if (user?.email || user?.id) {
+            setLoadingOrders(true);
+            api.getOrders(user.email, user.id)
+                .then(response => {
+                    if (response.success && Array.isArray(response.data)) {
+                        setUserOrders(response.data);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch orders:', err))
+                .finally(() => setLoadingOrders(false));
+        }
+    }, [user?.email, user?.id]);
+
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                name: user.name || '',
+                email: user.email || '',
+                phone: user.phone || ''
+            });
+        }
+    }, [user]);
+
+
 
     // Convert DB address to frontend format
     const dbToFrontendAddress = (dbAddr: DBAddress): Address => ({
@@ -88,7 +139,7 @@ export function UserProfile() {
             setLoadingAddresses(true);
             api.getAddresses(user.id)
                 .then((response) => {
-                    if (response.success && response.data) {
+                    if (response.success && Array.isArray(response.data)) {
                         const converted = (response.data as DBAddress[]).map(dbToFrontendAddress);
                         setAddresses(converted);
                     }
@@ -130,7 +181,7 @@ export function UserProfile() {
                 setShowAddressForm(false);
                 toast.success('Address added successfully');
             } else {
-                toast.error(response.error || 'Failed to add address');
+                toast.error((response as any).error || 'Failed to add address');
             }
         } catch (error) {
             console.error('Error adding address:', error);
@@ -149,7 +200,7 @@ export function UserProfile() {
                 setEditingAddress(null);
                 toast.success('Address updated successfully');
             } else {
-                toast.error(response.error || 'Failed to update address');
+                toast.error((response as any).error || 'Failed to update address');
             }
         } catch (error) {
             console.error('Error updating address:', error);
@@ -168,7 +219,7 @@ export function UserProfile() {
                 setAddresses(addresses.filter(a => a.id !== id));
                 toast.success('Address deleted');
             } else {
-                toast.error(response.error || 'Failed to delete address');
+                toast.error((response as any).error || 'Failed to delete address');
             }
         } catch (error) {
             console.error('Error deleting address:', error);
@@ -181,18 +232,57 @@ export function UserProfile() {
             const response = await api.setDefaultAddress(id);
             if (response.success && response.data) {
                 const updatedAddress = dbToFrontendAddress(response.data as DBAddress);
-                setAddresses(addresses.map(a => 
+                setAddresses(addresses.map(a =>
                     a.id === id ? updatedAddress : { ...a, isDefault: false }
                 ));
                 toast.success('Default address updated');
             } else {
-                toast.error(response.error || 'Failed to set default address');
+                toast.error((response as any).error || 'Failed to set default address');
             }
         } catch (error) {
             console.error('Error setting default address:', error);
             toast.error('Failed to set default address');
         }
     };
+
+    const handleUpdateProfile = async () => {
+        if (!user?.id) return;
+        try {
+            const response = await api.updateProfile({ id: user.id, ...profileData });
+            if (response.success) {
+                toast.success('Profile updated successfully');
+            } else {
+                toast.error((response as any).error || 'Failed to update profile');
+            }
+        } catch (error) {
+            toast.error('Failed to update profile');
+        }
+    };
+
+    const handleChangePassword = async () => {
+        if (!user?.id) return;
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('New passwords do not match');
+            return;
+        }
+        try {
+            const response = await api.changePassword({
+                id: user.id,
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword
+            });
+            if (response.success) {
+                toast.success('Password updated successfully');
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            } else {
+                toast.error((response as any).error || 'Failed to change password');
+            }
+        } catch (error) {
+            toast.error('Failed to change password');
+        }
+    };
+
+    const selectedOrderForModal = userOrders.find(o => o.id === showOrderDetail);
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -231,8 +321,8 @@ export function UserProfile() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === tab.id
-                                                ? 'bg-amber-50 text-amber-700 font-medium'
-                                                : 'text-gray-700 hover:bg-gray-50'
+                                            ? 'bg-amber-50 text-amber-700 font-medium'
+                                            : 'text-gray-700 hover:bg-gray-50'
                                             }`}
                                     >
                                         <Icon size={20} />
@@ -290,21 +380,23 @@ export function UserProfile() {
                                 {/* Recent Orders */}
                                 <div className="bg-white rounded-xl shadow-sm p-6">
                                     <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
-                                    {userOrders.length === 0 ? (
+                                    {loadingOrders ? (
+                                        <p className="text-gray-500 text-center py-8">Loading orders...</p>
+                                    ) : userOrders.length === 0 ? (
                                         <p className="text-gray-500 text-center py-8">No orders yet</p>
                                     ) : (
                                         <div className="space-y-4">
                                             {userOrders.slice(0, 3).map((order) => (
                                                 <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-amber-300 transition-colors">
                                                     <div>
-                                                        <p className="font-medium">Order #{order.id}</p>
-                                                        <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
+                                                        <p className="font-medium text-sm">Order #{order.id.slice(-8).toUpperCase()}</p>
+                                                        <p className="text-xs text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="font-semibold">${order.total.toFixed(2)}</p>
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                                                                    'bg-yellow-100 text-yellow-700'
+                                                        <p className="font-semibold text-sm">${order.total.toFixed(2)}</p>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                            order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                                'bg-amber-100 text-amber-700'
                                                             }`}>
                                                             {order.status}
                                                         </span>
@@ -321,7 +413,11 @@ export function UserProfile() {
                         {activeTab === 'orders' && (
                             <div className="bg-white rounded-xl shadow-sm p-6">
                                 <h2 className="text-xl font-semibold mb-6">Order History</h2>
-                                {userOrders.length === 0 ? (
+                                {loadingOrders ? (
+                                    <div className="text-center py-12">
+                                        <p className="text-gray-500">Loading orders...</p>
+                                    </div>
+                                ) : userOrders.length === 0 ? (
                                     <div className="text-center py-12">
                                         <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                                         <p className="text-gray-500">No orders yet</p>
@@ -333,28 +429,28 @@ export function UserProfile() {
                                             <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:border-amber-300 transition-colors">
                                                 <div className="flex items-start justify-between mb-4">
                                                     <div>
-                                                        <h3 className="font-semibold text-lg">Order #{order.id}</h3>
-                                                        <p className="text-sm text-gray-600">Placed on {new Date(order.date).toLocaleDateString()}</p>
+                                                        <h3 className="font-semibold text-lg text-gray-900">Order #{order.id.slice(-8).toUpperCase()}</h3>
+                                                        <p className="text-sm text-gray-600">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
                                                     </div>
-                                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                                            order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                                                                'bg-yellow-100 text-yellow-700'
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                                        order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                            'bg-amber-100 text-amber-700'
                                                         }`}>
-                                                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                                        {order.status}
                                                     </span>
                                                 </div>
 
                                                 <div className="border-t pt-4">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm text-gray-600">{order.items.length} item(s)</p>
-                                                            <p className="text-lg font-semibold mt-1">${order.total.toFixed(2)}</p>
+                                                            <p className="text-sm text-gray-600">{order.items?.length || 0} item(s)</p>
+                                                            <p className="text-lg font-bold mt-1 text-gray-900">${order.total.toFixed(2)}</p>
                                                         </div>
                                                         <button
                                                             onClick={() => setShowOrderDetail(order.id)}
-                                                            className="flex items-center gap-2 px-4 py-2 text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                                                            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
                                                         >
-                                                            <Eye size={18} />
+                                                            <Eye size={16} />
                                                             View Details
                                                         </button>
                                                     </div>
@@ -476,42 +572,68 @@ export function UserProfile() {
                                 <div className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                                        <Input defaultValue={user?.name} />
+                                        <Input
+                                            value={profileData.name}
+                                            onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                        <Input type="email" defaultValue={user?.email} />
+                                        <Input
+                                            type="email"
+                                            value={profileData.email}
+                                            onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                                        <Input type="tel" placeholder="+1 (555) 123-4567" />
+                                        <Input
+                                            type="tel"
+                                            value={profileData.phone}
+                                            onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                            placeholder="+1 (555) 123-4567"
+                                        />
                                     </div>
 
-                                    <div className="pt-6 border-t">
+                                    <div className="flex gap-4 pt-4">
+                                        <Button onClick={handleUpdateProfile} className="bg-amber-700 hover:bg-amber-800">
+                                            Save Profile
+                                        </Button>
+                                    </div>
+
+                                    <div className="pt-8 border-t">
                                         <h3 className="font-semibold mb-4">Change Password</h3>
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
-                                                <Input type="password" />
+                                                <Input
+                                                    type="password"
+                                                    value={passwordData.currentPassword}
+                                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                                                <Input type="password" />
+                                                <Input
+                                                    type="password"
+                                                    value={passwordData.newPassword}
+                                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                                />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                                                <Input type="password" />
+                                                <Input
+                                                    type="password"
+                                                    value={passwordData.confirmPassword}
+                                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                                />
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="flex gap-4 pt-6">
-                                        <Button className="bg-amber-700 hover:bg-amber-800">
-                                            Save Changes
-                                        </Button>
-                                        <Button variant="outline">
-                                            Cancel
-                                        </Button>
+                                        <div className="flex gap-4 pt-6">
+                                            <Button onClick={handleChangePassword} className="bg-amber-700 hover:bg-amber-800">
+                                                Update Password
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -519,6 +641,88 @@ export function UserProfile() {
                     </div>
                 </div>
             </div>
+
+            {/* Order Detail Modal */}
+            {showOrderDetail && selectedOrderForModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">Order #{selectedOrderForModal.id.slice(-8).toUpperCase()}</h3>
+                                <p className="text-sm text-gray-500">{new Date(selectedOrderForModal.createdAt).toLocaleString()}</p>
+                            </div>
+                            <button onClick={() => setShowOrderDetail(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                <X size={20} className="text-gray-500" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                            {/* Items */}
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Items</h4>
+                                <div className="space-y-4">
+                                    {selectedOrderForModal.items?.map((item: any) => (
+                                        <div key={item.id} className="flex gap-4 items-center p-3 bg-gray-50 rounded-xl">
+                                            <div className="w-16 h-16 bg-white rounded-lg overflow-hidden border">
+                                                <img
+                                                    src={item.product?.imageUrl || 'https://via.placeholder.com/100'}
+                                                    alt={item.product?.name || 'Product'}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-900 text-sm truncate">{item.product?.name || 'Unknown Product'}</p>
+                                                <p className="text-xs text-gray-500">Qty: {item.quantity} × ${item.price.toFixed(2)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-gray-900">${(item.quantity * item.price).toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Summary */}
+                            <div className="bg-gray-50 rounded-2xl p-6">
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        <span>Subtotal</span>
+                                        <span>${selectedOrderForModal.subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        <span>Shipping</span>
+                                        <span>${selectedOrderForModal.shipping.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-lg font-black text-gray-900 pt-3 border-t">
+                                        <span>Total</span>
+                                        <span className="text-amber-600">${selectedOrderForModal.total.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Shipping info */}
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Shipping Tracking</h4>
+                                <div className="p-4 border border-gray-100 rounded-xl bg-white shadow-sm">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                        <span className="text-sm font-bold text-gray-900">Current Status: {selectedOrderForModal.status.toUpperCase()}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 leading-relaxed">
+                                        Order is being {selectedOrderForModal.status}. You will receive a notification once it's delivered.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-gray-50 border-t">
+                            <Button onClick={() => setShowOrderDetail(null)} className="w-full bg-gray-900 hover:bg-black text-white py-6">
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

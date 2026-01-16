@@ -9,9 +9,13 @@ const prisma = new PrismaClient();
 
 async function createAdmin() {
   try {
-    const email = 'lorgroup.dj@gmail.com';
-    const password = '123456';
-    const name = 'Admin User';
+    const email = process.env.ADMIN_EMAIL || 'admin@yourstore.com';
+    const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+    const name = process.env.ADMIN_NAME || 'Admin User';
+
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.warn('⚠️  ADMIN_EMAIL or ADMIN_PASSWORD not set in .env. Using defaults.');
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({

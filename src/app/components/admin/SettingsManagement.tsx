@@ -60,7 +60,7 @@ export function SettingsManagement() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
+
       // Save each setting to the database
       const settingKeys: (keyof Settings)[] = [
         'storeName',
@@ -78,7 +78,7 @@ export function SettingsManagement() {
       const savePromises = settingKeys.map(async (key) => {
         const value = settings[key];
         const type = typeof value === 'number' ? 'number' : typeof value === 'boolean' ? 'boolean' : 'string';
-        
+
         return api.updateSetting({
           key,
           value,
@@ -255,16 +255,7 @@ export function SettingsManagement() {
           <Shield className="w-5 h-5 text-amber-600" />
           <h3 className="text-lg font-bold text-gray-900">Security</h3>
         </div>
-        <div className="space-y-4">
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800">
-              <strong>Admin Credentials:</strong> admin@nura.com / admin123
-            </p>
-            <p className="text-xs text-amber-700 mt-1">
-              In production, implement proper authentication and password management.
-            </p>
-          </div>
-        </div>
+
       </div>
 
       {/* Save Button */}

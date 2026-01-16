@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { X, ArrowLeft, ArrowRight, Check, CreditCard, Lock } from 'lucide-react';
-import { CartItem, ShippingInfo, PaymentInfo, Order } from '../types';
+import { CartItem, ShippingInfo, PaymentInfo, Order, Settings } from '../types';
 import { useAuth } from '../auth';
 import { toast } from 'sonner';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { addOrder } from '../data/orders';
+import { api } from '../../lib/api';
 
 interface CheckoutProps {
+  settings: Settings;
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
@@ -18,6 +20,7 @@ interface CheckoutProps {
 type CheckoutStep = 'shipping' | 'payment' | 'review' | 'confirmation';
 
 export function Checkout({
+  settings,
   isOpen,
   onClose,
   items,
@@ -29,17 +32,13 @@ export function Checkout({
   const [orderId, setOrderId] = useState<string>('');
 
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    firstName: '',
+    lastName: '',
     email: user?.email || '',
     phone: '',
-    address: '',
-    apartment: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-    deliveryNotes: '',
+    whatsapp: '',
+    quartier: '',
+    placeToReceive: '',
   });
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
@@ -47,18 +46,19 @@ export function Checkout({
   });
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 150 ? 0 : 15;
-  const total = subtotal + shipping;
+  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingCost;
+  const tax = subtotal * (settings.taxRate / 100);
+  const total = subtotal + shipping + tax;
 
   const validateShipping = (): boolean => {
-    const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode', 'country'];
+    const required = ['firstName', 'lastName', 'phone', 'quartier', 'placeToReceive'];
     for (const field of required) {
       if (!shippingInfo[field as keyof ShippingInfo]) {
         toast.error(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
+    if (shippingInfo.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
       toast.error('Please enter a valid email address');
       return false;
     }
@@ -92,35 +92,53 @@ export function Checkout({
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Generate order ID
-    const newOrderId = `ORD-${Date.now()}`;
-    setOrderId(newOrderId);
-    
-    // Create and save order
-    const order: Order = {
-      id: newOrderId,
-      items,
-      shippingInfo,
-      paymentInfo,
+    const orderData = {
+      customer: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+      phone: shippingInfo.phone,
+      email: shippingInfo.email,
+      whatsapp: shippingInfo.whatsapp,
+      quartier: shippingInfo.quartier,
+      placeToReceive: shippingInfo.placeToReceive,
+      items: items.map(item => ({
+        productId: item.productId || item.id,
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size
+      })),
       subtotal,
-      shipping,
+      shipping: shipping,
       total,
-      orderDate: new Date(),
+      paymentMethod: paymentInfo.paymentMethod,
+      userId: user?.id,
     };
-    
-    // Add status to order
-    (order as any).status = 'processing';
-    
-    addOrder(order);
-    
-    toast.success(`Order #${newOrderId} placed successfully!`);
-    setCurrentStep('confirmation');
-    setIsProcessing(false);
-    
+
+    try {
+      const response = await api.createOrder(orderData);
+      if (response.success) {
+        const newOrderId = response.data.id;
+        setOrderId(newOrderId);
+
+        // This keeps the local store in sync if needed, though the API is the source of truth now
+        const localOrder: Order = {
+          ...response.data,
+          orderDate: new Date(response.data.createdAt)
+        };
+        addOrder(localOrder);
+
+        toast.success(`Order #${newOrderId.split('-')[1]} placed successfully!`);
+        setCurrentStep('confirmation');
+      } else {
+        toast.error(response.error || 'Failed to place order');
+      }
+    } catch (error) {
+      console.error('Order placement error:', error);
+      toast.error('An unexpected error occurred while placing your order.');
+    } finally {
+      setIsProcessing(false);
+    }
+
     // Call completion handler after a delay
     setTimeout(() => {
       onOrderComplete();
@@ -133,13 +151,9 @@ export function Checkout({
         lastName: '',
         email: user?.email || '',
         phone: '',
-        address: '',
-        apartment: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: '',
-        deliveryNotes: '',
+        whatsapp: '',
+        quartier: '',
+        placeToReceive: '',
       });
       setPaymentInfo({
         paymentMethod: 'waafi',
@@ -178,38 +192,35 @@ export function Checkout({
         {/* Progress Steps */}
         {currentStep !== 'confirmation' && (
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b bg-white">
-            {(['shipping', 'payment', 'review'] as CheckoutStep[]).map((step, index) => {
+            {(['shipping', 'payment', 'review'] as const).map((step, index) => {
               const stepNames = { shipping: 'Shipping', payment: 'Payment', review: 'Review' };
-              const isActive = currentStep === step;
-              const isCompleted = ['shipping', 'payment', 'review'].indexOf(currentStep) > index;
-              
+              const isActive = (currentStep as string) === step;
+              const isCompleted = (['shipping', 'payment', 'review'] as string[]).indexOf(currentStep) > index;
+
               return (
                 <div key={step} className="flex items-center flex-1">
                   <div className="flex flex-col items-center flex-1">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-amber-700 text-white'
-                          : isCompleted
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${isActive
+                        ? 'bg-amber-700 text-white'
+                        : isCompleted
                           ? 'bg-green-500 text-white'
                           : 'bg-gray-200 text-gray-600'
-                      }`}
+                        }`}
                     >
                       {isCompleted ? <Check size={16} /> : index + 1}
                     </div>
                     <span
-                      className={`text-xs mt-2 ${
-                        isActive ? 'text-amber-700 font-medium' : 'text-gray-500'
-                      }`}
+                      className={`text-xs mt-2 ${isActive ? 'text-amber-700 font-medium' : 'text-gray-500'
+                        }`}
                     >
-                      {stepNames[step]}
+                      {stepNames[step as keyof typeof stepNames]}
                     </span>
                   </div>
                   {index < 2 && (
                     <div
-                      className={`h-0.5 flex-1 mx-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
+                      className={`h-0.5 flex-1 mx-2 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                        }`}
                     />
                   )}
                 </div>
@@ -250,8 +261,55 @@ export function Checkout({
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Phone *</label>
+                  <Input
+                    type="tel"
+                    value={shippingInfo.phone}
+                    onChange={(e) =>
+                      setShippingInfo({ ...shippingInfo, phone: e.target.value })
+                    }
+                    placeholder="+252..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">WhatsApp No *</label>
+                  <Input
+                    type="tel"
+                    value={shippingInfo.whatsapp}
+                    onChange={(e) =>
+                      setShippingInfo({ ...shippingInfo, whatsapp: e.target.value })
+                    }
+                    placeholder="+252..."
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email *</label>
+                <label className="text-sm font-medium text-gray-700">Quartier (Neighborhood) *</label>
+                <Input
+                  value={shippingInfo.quartier}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, quartier: e.target.value })
+                  }
+                  placeholder="Enter your quartier"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">La place de resevoir (Drop-off Point) *</label>
+                <Input
+                  value={shippingInfo.placeToReceive}
+                  onChange={(e) =>
+                    setShippingInfo({ ...shippingInfo, placeToReceive: e.target.value })
+                  }
+                  placeholder="Where would you like to receive it?"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Email (Optional)</label>
                 <Input
                   type="email"
                   value={shippingInfo.email}
@@ -260,86 +318,6 @@ export function Checkout({
                   }
                   placeholder="john@example.com"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Phone *</label>
-                <Input
-                  type="tel"
-                  value={shippingInfo.phone}
-                  onChange={(e) =>
-                    setShippingInfo({ ...shippingInfo, phone: e.target.value })
-                  }
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Address *</label>
-                <Input
-                  value={shippingInfo.address}
-                  onChange={(e) =>
-                    setShippingInfo({ ...shippingInfo, address: e.target.value })
-                  }
-                  placeholder="123 Main Street"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Apartment, suite, etc. (optional)</label>
-                <Input
-                  value={shippingInfo.apartment}
-                  onChange={(e) =>
-                    setShippingInfo({ ...shippingInfo, apartment: e.target.value })
-                  }
-                  placeholder="Apt 4B"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">City *</label>
-                  <Input
-                    value={shippingInfo.city}
-                    onChange={(e) =>
-                      setShippingInfo({ ...shippingInfo, city: e.target.value })
-                    }
-                    placeholder="New York"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">State/Province *</label>
-                  <Input
-                    value={shippingInfo.state}
-                    onChange={(e) =>
-                      setShippingInfo({ ...shippingInfo, state: e.target.value })
-                    }
-                    placeholder="NY"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">ZIP/Postal Code *</label>
-                  <Input
-                    value={shippingInfo.zipCode}
-                    onChange={(e) =>
-                      setShippingInfo({ ...shippingInfo, zipCode: e.target.value })
-                    }
-                    placeholder="10001"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Country *</label>
-                  <Input
-                    value={shippingInfo.country}
-                    onChange={(e) =>
-                      setShippingInfo({ ...shippingInfo, country: e.target.value })
-                    }
-                    placeholder="United States"
-                  />
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -368,19 +346,17 @@ export function Checkout({
                   <button
                     key={method}
                     onClick={() => setPaymentInfo({ ...paymentInfo, paymentMethod: method })}
-                    className={`w-full p-4 border-2 rounded-lg text-left transition-all ${
-                      paymentInfo.paymentMethod === method
-                        ? 'border-amber-700 bg-amber-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`w-full p-4 border-2 rounded-lg text-left transition-all ${paymentInfo.paymentMethod === method
+                      ? 'border-amber-700 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentInfo.paymentMethod === method
-                            ? 'border-amber-700'
-                            : 'border-gray-300'
-                        }`}
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentInfo.paymentMethod === method
+                          ? 'border-amber-700'
+                          : 'border-gray-300'
+                          }`}
                       >
                         {paymentInfo.paymentMethod === method && (
                           <div className="w-3 h-3 rounded-full bg-amber-700" />
@@ -427,7 +403,7 @@ export function Checkout({
                   <div key={item.id} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
                     <div className="w-20 h-24 bg-gray-100 flex-shrink-0 rounded">
                       <ImageWithFallback
-                        src={item.image}
+                        src={item.imageUrl}
                         alt={item.name}
                         className="w-full h-full object-cover rounded"
                       />
@@ -449,20 +425,19 @@ export function Checkout({
 
               {/* Shipping Info */}
               <div className="border rounded-lg p-4 space-y-2">
-                <h4 className="font-semibold">Shipping Address</h4>
-                <p className="text-sm text-gray-600">
-                  {shippingInfo.firstName} {shippingInfo.lastName}
-                  <br />
-                  {shippingInfo.address}
-                  {shippingInfo.apartment && `, ${shippingInfo.apartment}`}
-                  <br />
-                  {shippingInfo.city}, {shippingInfo.state} {shippingInfo.zipCode}
-                  <br />
-                  {shippingInfo.country}
-                  <br />
-                  <span className="mt-1 block">Phone: {shippingInfo.phone}</span>
-                  <span>Email: {shippingInfo.email}</span>
-                </p>
+                <h4 className="font-semibold">Delivery Details</h4>
+                <div className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900">
+                    {shippingInfo.firstName} {shippingInfo.lastName}
+                  </p>
+                  <p>Quartier: {shippingInfo.quartier}</p>
+                  <p>Drop-off: {shippingInfo.placeToReceive}</p>
+                  <div className="mt-2 pt-2 border-t flex flex-wrap gap-x-4 gap-y-1">
+                    <p>Phone: {shippingInfo.phone}</p>
+                    <p>WhatsApp: {shippingInfo.whatsapp}</p>
+                    {shippingInfo.email && <p>Email: {shippingInfo.email}</p>}
+                  </div>
+                </div>
               </div>
 
               {/* Payment Info */}
@@ -480,6 +455,12 @@ export function Checkout({
                   <span className="text-gray-600">Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
+                {settings.taxRate > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax ({settings.taxRate}%)</span>
+                    <span>${tax.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
                   <span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>

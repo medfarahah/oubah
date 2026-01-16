@@ -1,7 +1,9 @@
-export function WhatsAppButton() {
+import { Settings } from '../types';
+
+export function WhatsAppButton({ settings }: { settings: Settings }) {
   return (
     <a
-      href="https://wa.me/25377213018"
+      href={`https://wa.me/${settings.storePhone.replace(/[^0-9]/g, '')}`}
       target="_blank"
       rel="noopener noreferrer"
       className="group fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-amber-500/40 hover:from-amber-500 hover:via-amber-600 hover:to-amber-700"
@@ -11,7 +13,7 @@ export function WhatsAppButton() {
       <div className="relative w-full h-full flex items-center justify-center">
         {/* WhatsApp green accent circle */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-500/30 via-green-600/20 to-transparent" />
-        
+
         {/* WhatsApp Business Icon SVG */}
         <svg
           width="32"
@@ -26,7 +28,7 @@ export function WhatsAppButton() {
             fill="currentColor"
           />
         </svg>
-        
+
         {/* Shine effect on hover */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         {/* Glow effect on hover */}

@@ -1,10 +1,13 @@
 import { Instagram, Facebook, Twitter, Mail, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Settings } from '../types';
 
 interface FooterProps {
+  settings: Settings;
   onNavigate?: (page: 'home' | 'about' | 'contact' | 'faq' | 'shipping' | 'privacy' | 'terms' | 'size-guide') => void;
 }
 
-export function Footer({ onNavigate }: FooterProps) {
+export function Footer({ settings, onNavigate }: FooterProps) {
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -12,7 +15,7 @@ export function Footer({ onNavigate }: FooterProps) {
           {/* Brand */}
           <div>
             <h3 className="text-xl mb-4 font-serif">
-              NŪRA <span className="text-amber-500">COLLECTION</span>
+              {settings.storeName.split(' ')[0]} {settings.storeName.split(' ').length > 1 && <span className="text-amber-500">{settings.storeName.split(' ').slice(1).join(' ').toUpperCase()}</span>}
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
               Luxury modest fashion for the modern woman. Premium quality hijabs and Islamic clothing.
@@ -27,9 +30,9 @@ export function Footer({ onNavigate }: FooterProps) {
               <a href="#" className="hover:text-amber-500 transition">
                 <Twitter size={20} />
               </a>
-              <a 
-                href="https://wa.me/25377213018" 
-                target="_blank" 
+              <a
+                href={`https://wa.me/${settings.storePhone.replace(/[^0-9]/g, '')}`}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-green-500 transition"
                 aria-label="Contact us on WhatsApp"
@@ -43,11 +46,11 @@ export function Footer({ onNavigate }: FooterProps) {
           <div>
             <h4 className="mb-4 tracking-wider">SHOP</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><button onClick={() => onNavigate?.('home')} className="hover:text-white transition">New Arrivals</button></li>
-              <li><button onClick={() => onNavigate?.('home')} className="hover:text-white transition">Hijabs</button></li>
-              <li><button onClick={() => onNavigate?.('home')} className="hover:text-white transition">Abayas</button></li>
-              <li><button onClick={() => onNavigate?.('home')} className="hover:text-white transition">Accessories</button></li>
-              <li><button onClick={() => onNavigate?.('home')} className="hover:text-white transition">Sale</button></li>
+              <li><Link to="/new" className="hover:text-white transition">New Arrivals</Link></li>
+              <li><Link to="/hijabs" className="hover:text-white transition">Hijabs</Link></li>
+              <li><Link to="/abayas" className="hover:text-white transition">Abayas</Link></li>
+              <li><Link to="/accessories" className="hover:text-white transition">Accessories</Link></li>
+              <li><Link to="/sale" className="hover:text-white transition">Sale</Link></li>
             </ul>
           </div>
 
@@ -55,11 +58,11 @@ export function Footer({ onNavigate }: FooterProps) {
           <div>
             <h4 className="mb-4 tracking-wider">CUSTOMER SERVICE</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><button onClick={() => onNavigate?.('contact')} className="hover:text-white transition">Contact Us</button></li>
-              <li><button onClick={() => onNavigate?.('faq')} className="hover:text-white transition">FAQ</button></li>
-              <li><button onClick={() => onNavigate?.('shipping')} className="hover:text-white transition">Shipping & Returns</button></li>
-              <li><button onClick={() => onNavigate?.('size-guide')} className="hover:text-white transition">Size Guide</button></li>
-              <li><button onClick={() => onNavigate?.('about')} className="hover:text-white transition">About Us</button></li>
+              <li><Link to="/contact" className="hover:text-white transition">Contact Us</Link></li>
+              <li><Link to="/faq" className="hover:text-white transition">FAQ</Link></li>
+              <li><Link to="/shipping" className="hover:text-white transition">Shipping & Returns</Link></li>
+              <li><Link to="/size-guide" className="hover:text-white transition">Size Guide</Link></li>
+              <li><Link to="/about" className="hover:text-white transition">About Us</Link></li>
             </ul>
           </div>
 
@@ -84,10 +87,10 @@ export function Footer({ onNavigate }: FooterProps) {
 
         {/* Bottom */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-          <p>© 2026 Nūra Collection. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {settings.storeName}. All rights reserved.</p>
           <div className="flex gap-6">
-            <button onClick={() => onNavigate?.('privacy')} className="hover:text-white transition">Privacy Policy</button>
-            <button onClick={() => onNavigate?.('terms')} className="hover:text-white transition">Terms of Service</button>
+            <Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition">Terms of Service</Link>
           </div>
         </div>
       </div>

@@ -1,10 +1,11 @@
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
-import { CartItem } from '../types';
+import { CartItem, Settings } from '../types';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useAuth } from '../auth';
 import { toast } from 'sonner';
 
 interface ShoppingCartProps {
+  settings: Settings;
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
@@ -15,6 +16,7 @@ interface ShoppingCartProps {
 }
 
 export function ShoppingCart({
+  settings,
   isOpen,
   onClose,
   items,
@@ -25,7 +27,7 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const { user } = useAuth();
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 150 ? 0 : 15;
+  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingCost;
   const total = subtotal + shipping;
 
   const handleCheckout = () => {
@@ -79,7 +81,7 @@ export function ShoppingCart({
                 <div key={item.id} className="flex gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-gray-100 last:border-0">
                   <div className="w-20 h-24 sm:w-24 sm:h-32 bg-gray-100 flex-shrink-0 rounded overflow-hidden">
                     <ImageWithFallback
-                      src={item.image}
+                      src={item.imageUrl}
                       alt={item.name}
                       className="w-full h-full object-cover"
                     />
@@ -91,7 +93,7 @@ export function ShoppingCart({
                       <p className="text-xs text-gray-500 mb-1">Size: {item.size}</p>
                     )}
                     <p className="mb-2 text-sm sm:text-base font-semibold">${item.price}</p>
-                    
+
                     {/* Quantity controls */}
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="flex items-center border border-gray-200 rounded">
@@ -140,9 +142,9 @@ export function ShoppingCart({
               <span className="text-gray-600">Shipping</span>
               <span className="font-medium">{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
             </div>
-            {subtotal < 150 && (
+            {subtotal < settings.freeShippingThreshold && (
               <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-                Add ${(150 - subtotal).toFixed(2)} more for free shipping!
+                Add ${(settings.freeShippingThreshold - subtotal).toFixed(2)} more for free shipping!
               </p>
             )}
             <div className="flex justify-between text-base sm:text-lg font-semibold border-t pt-3 sm:pt-4">

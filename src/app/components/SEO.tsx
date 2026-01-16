@@ -10,6 +10,7 @@ interface SEOProps {
   type?: 'website' | 'product' | 'article';
   product?: Product;
   noindex?: boolean;
+  imageUrl?: string;
 }
 
 export function SEO({
@@ -21,6 +22,7 @@ export function SEO({
   type = 'website',
   product,
   noindex = false,
+  imageUrl, // Added for flexibility if needed, but primary source is product.imageUrl
 }: SEOProps) {
   useEffect(() => {
     // Update document title
@@ -47,7 +49,7 @@ export function SEO({
     // Open Graph tags
     updateMetaTag('og:title', title, 'property');
     updateMetaTag('og:description', description, 'property');
-    updateMetaTag('og:image', image, 'property');
+    updateMetaTag('og:image', image || product?.imageUrl || '', 'property');
     updateMetaTag('og:url', url, 'property');
     updateMetaTag('og:type', type, 'property');
     updateMetaTag('og:site_name', 'NŪRA Collection', 'property');
@@ -57,7 +59,7 @@ export function SEO({
     updateMetaTag('twitter:card', 'summary_large_image');
     updateMetaTag('twitter:title', title);
     updateMetaTag('twitter:description', description);
-    updateMetaTag('twitter:image', image);
+    updateMetaTag('twitter:image', image || product?.imageUrl || '');
     updateMetaTag('twitter:site', '@nura_collection');
 
     // Product-specific tags
@@ -96,7 +98,7 @@ export function SEO({
         '@type': 'Product',
         name: product.name,
         description: product.description,
-        image: product.image,
+        image: product.imageUrl,
         brand: {
           '@type': 'Brand',
           name: 'NŪRA Collection',

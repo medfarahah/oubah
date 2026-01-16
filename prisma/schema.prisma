@@ -31,7 +31,7 @@ model Product {
   name          String
   price         Float
   imageUrl      String   @map("image_url")
-  category      String?
+  categories    String[]
   originalPrice Float?   @map("original_price")
   description   String?
   material      String?
@@ -80,6 +80,9 @@ model Order {
   state         String?
   zipCode       String?  @map("zip_code")
   country       String?
+  whatsapp      String?
+  quartier      String?
+  placeToReceive String? @map("place_to_receive")
   
   // Order details
   status        String   @default("pending") // pending, processing, shipped, delivered, cancelled
@@ -108,6 +111,7 @@ model OrderItem {
   productId String  @map("product_id")
   quantity  Int
   price     Float   // Price at time of order
+  size      String? // Size selected at time of order
 
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
@@ -147,6 +151,9 @@ model Address {
   state      String?
   zipCode    String? @map("zip_code")
   country    String
+  whatsapp   String?
+  quartier   String?
+  placeToReceive String?  @map("place_to_receive")
   phone      String?
   isDefault  Boolean @default(false) @map("is_default")
 

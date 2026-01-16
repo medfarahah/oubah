@@ -21,15 +21,15 @@ export function ProductCard({
     <div className="group cursor-pointer">
       <div className="relative overflow-hidden bg-gray-50 aspect-[3/4] mb-4">
         <ImageWithFallback
-          src={product.image}
+          src={product.imageUrl}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           onClick={() => onProductClick(product)}
         />
-        
+
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-        
+
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {product.isNew && (
@@ -48,9 +48,8 @@ export function ProductCard({
               e.stopPropagation();
               onToggleWishlist?.(product);
             }}
-            className={`bg-white p-2 rounded-full shadow-sm hover:bg-amber-700 hover:text-white transition-colors ${
-              isWishlisted ? 'text-amber-700' : ''
-            }`}
+            className={`bg-white p-2 rounded-full shadow-sm hover:bg-amber-700 hover:text-white transition-colors ${isWishlisted ? 'text-amber-700' : ''
+              }`}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart

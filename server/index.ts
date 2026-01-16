@@ -7,6 +7,8 @@ import productRoutes from './routes/products';
 import orderRoutes from './routes/orders';
 import settingRoutes from './routes/settings';
 import addressRoutes from './routes/addresses';
+import customerRoutes from './routes/customers';
+import userRoutes from './routes/user';
 
 dotenv.config();
 
@@ -43,6 +45,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/user', userRoutes);
 
 app.get('/', (req, res) => {
     res.send('Nuri Backend Server is running. API is available at /api');

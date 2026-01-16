@@ -1,10 +1,10 @@
 export interface Product {
   id: string;
   name: string;
-  category: string;
+  categories: string[];
   price: number;
   originalPrice?: number;
-  image: string;
+  imageUrl: string;
   description: string;
   material?: string;
   colors?: string[];
@@ -14,6 +14,7 @@ export interface Product {
 }
 
 export interface CartItem extends Product {
+  productId?: string;
   quantity: number;
   size?: string;
 }
@@ -21,14 +22,11 @@ export interface CartItem extends Product {
 export interface ShippingInfo {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone: string;
-  address: string;
-  apartment?: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  whatsapp: string;
+  quartier: string;
+  placeToReceive: string;
   deliveryNotes?: string;
 }
 
@@ -46,4 +44,17 @@ export interface Order {
   total: number;
   orderDate: Date;
   status: string;
+}
+
+export interface Settings {
+  storeName: string;
+  storeEmail: string;
+  storePhone: string;
+  storeAddress: string;
+  currency: string;
+  taxRate: number;
+  freeShippingThreshold: number;
+  shippingCost: number;
+  enableNotifications: boolean;
+  enableEmailNotifications: boolean;
 }

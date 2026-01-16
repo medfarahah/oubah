@@ -16,13 +16,13 @@ type ApiResponse<T> = ApiSuccess<T> | ApiError;
 // For production: use empty string to use same-origin (Vercel serverless functions)
 // If VITE_API_URL is not set or empty, use relative paths for Vercel
 const getApiUrl = () => {
-  const envUrl = (import.meta as any).env?.VITE_API_URL as string;
-  if (!envUrl || envUrl === '') {
-    // Empty or not set - use relative paths for Vercel serverless functions
-    return '';
-  }
-  // Use the provided URL (e.g., http://localhost:3000 for local dev)
-  return envUrl;
+    const envUrl = (import.meta as any).env?.VITE_API_URL as string;
+    if (!envUrl || envUrl === '') {
+        // Empty or not set - use relative paths for Vercel serverless functions
+        return '';
+    }
+    // Use the provided URL (e.g., http://localhost:3000 for local dev)
+    return envUrl;
 };
 
 const API_URL = getApiUrl();
@@ -36,7 +36,7 @@ async function request<T>(
         const url = `${API_URL}${endpoint}`;
         // Debug: Log the request details in development
         console.log('API Request:', { method: options.method || 'GET', url, endpoint, API_URL });
-        
+
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
@@ -59,7 +59,7 @@ async function request<T>(
         }
 
         const data = await response.json();
-        
+
         // If response has error status, return error
         if (!response.ok) {
             return {
@@ -126,7 +126,13 @@ export const api = {
     }),
 
     // Orders
-    getOrders: () => request<any[]>('/api/orders'),
+    getOrders: (email?: string, userId?: string) => {
+        const params = new URLSearchParams();
+        if (email) params.append('email', email);
+        if (userId) params.append('userId', userId);
+        const query = params.toString();
+        return request<any[]>(`/api/orders${query ? `?${query}` : ''}`);
+    },
     getOrder: (id: string) => request<any>(`/api/orders/${id}`),
     createOrder: (data: any) => request<any>('/api/orders', {
         method: 'POST',
@@ -137,12 +143,26 @@ export const api = {
         body: JSON.stringify(data),
     }),
 
+    // User Profile
+    updateProfile: (data: any) => request<any>('/api/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+    changePassword: (data: any) => request<any>('/api/user/password', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    }),
+
     // Settings
     getSettings: () => request<any>('/api/settings'),
     updateSetting: (data: any) => request<any>('/api/settings', {
         method: 'POST',
         body: JSON.stringify(data),
     }),
+
+    // Customers
+    getCustomers: () => request<any[]>('/api/customers'),
+    getCustomer: (id: string) => request<any>(`/api/customers/${id}`),
 
     // Addresses
     getAddresses: (userId: string) => request<any[]>(`/api/addresses?userId=${userId}`),

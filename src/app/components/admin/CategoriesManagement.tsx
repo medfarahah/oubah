@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getProducts, setProducts } from '../../data/products';
 import { Tag, Plus, Edit, Trash2, X, Save, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { api } from '../../../lib/api';
 
 interface Category {
   id: string;
@@ -15,6 +15,7 @@ interface Category {
 export function CategoriesManagement() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ name: string; description: string }>({
     name: '',
@@ -25,25 +26,43 @@ export function CategoriesManagement() {
     loadCategories();
   }, []);
 
-  const loadCategories = () => {
-    const products = getProducts();
-    const categoryMap = new Map<string, Category>();
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getProducts();
+      if (response.success && response.data) {
+        const products = response.data;
+        const categoryMap = new Map<string, Category>();
 
-    products.forEach((product) => {
-      const catName = product.category;
-      if (!categoryMap.has(catName)) {
-        categoryMap.set(catName, {
-          id: catName.toLowerCase().replace(/\s+/g, '-'),
-          name: catName,
-          description: '',
-          productCount: 0,
+        products.forEach((product: any) => {
+          const productCategories = product.categories && product.categories.length > 0
+            ? product.categories
+            : ['Uncategorized'];
+
+          productCategories.forEach((catName: string) => {
+            const normalizedCatName = catName.toUpperCase();
+
+            if (!categoryMap.has(normalizedCatName)) {
+              categoryMap.set(normalizedCatName, {
+                id: normalizedCatName.toLowerCase().replace(/\s+/g, '-'),
+                name: catName,
+                description: '',
+                productCount: 0,
+              });
+            }
+            const cat = categoryMap.get(normalizedCatName)!;
+            cat.productCount += 1;
+          });
         });
-      }
-      const cat = categoryMap.get(catName)!;
-      cat.productCount += 1;
-    });
 
-    setCategories(Array.from(categoryMap.values()));
+        setCategories(Array.from(categoryMap.values()));
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+      toast.error('Failed to load categories');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAdd = () => {
@@ -58,18 +77,25 @@ export function CategoriesManagement() {
     setIsAdding(false);
   };
 
-  const handleDelete = (categoryName: string) => {
-    const products = getProducts();
-    const productsInCategory = products.filter((p) => p.category === categoryName);
-    
-    if (productsInCategory.length > 0) {
-      toast.error(`Cannot delete category. ${productsInCategory.length} product(s) are using it.`);
-      return;
-    }
+  const handleDelete = async (categoryName: string) => {
+    try {
+      const response = await api.getProducts();
+      if (response.success && response.data) {
+        const products = response.data;
+        const productsInCategory = products.filter((p: any) => p.categories && p.categories.includes(categoryName));
 
-    if (confirm(`Are you sure you want to delete category "${categoryName}"?`)) {
-      loadCategories();
-      toast.success('Category deleted');
+        if (productsInCategory.length > 0) {
+          toast.error(`Cannot delete category. ${productsInCategory.length} product(s) are using it.`);
+          return;
+        }
+
+        if (confirm(`Are you sure you want to delete category "${categoryName}"?`)) {
+          loadCategories();
+          toast.success('Category deleted');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to check category status');
     }
   };
 
@@ -79,21 +105,12 @@ export function CategoriesManagement() {
       return;
     }
 
-    // In a real app, you'd update categories in a database
-    // For now, we'll just update the products that use this category
+    // In this implementation, categories are derived from product fields.
+    // To "add" or "edit" a category generally, you'd update individual products.
     if (editingId) {
-      const oldCategory = categories.find((c) => c.id === editingId);
-      if (oldCategory && oldCategory.name !== formData.name) {
-        // Update products with old category name to new category name
-        const products = getProducts();
-        const updated = products.map((p) =>
-          p.category === oldCategory.name ? { ...p, category: formData.name } : p
-        );
-        setProducts(updated);
-        toast.success('Category updated');
-      }
+      toast.info('To rename this category, please update the products using it in the Products tab.');
     } else {
-      toast.success('Category added');
+      toast.success('Category will be created when you add a product with this name.');
     }
 
     setIsAdding(false);

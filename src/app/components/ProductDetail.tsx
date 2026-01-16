@@ -25,7 +25,7 @@ export function ProductDetail({ product, isOpen, onClose, onAddToCart }: Product
         title={`${product.name} - NŪRA Collection`}
         description={product.description || `Shop ${product.name} from NŪRA Collection. ${product.material ? `Made from ${product.material}.` : ''} Premium quality, elegant design.`}
         keywords={`${product.name}, ${product.category}, hijab, modest fashion, ${product.material || ''}`}
-        image={product.image}
+        image={product.imageUrl}
         type="product"
         product={product}
       />
@@ -43,7 +43,7 @@ export function ProductDetail({ product, isOpen, onClose, onAddToCart }: Product
             {/* Image */}
             <div className="relative aspect-[3/4] sm:aspect-auto bg-gray-50 order-2 sm:order-1">
               <ImageWithFallback
-                src={product.image}
+                src={product.imageUrl}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -71,7 +71,7 @@ export function ProductDetail({ product, isOpen, onClose, onAddToCart }: Product
 
               <p className="text-xs sm:text-sm text-gray-500 tracking-widest mb-1 sm:mb-2">{product.category}</p>
               <h2 className="text-xl sm:text-2xl lg:text-3xl mb-3 sm:mb-4 font-semibold">{product.name}</h2>
-              
+
               <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                 <span className="text-xl sm:text-2xl font-bold">${product.price}</span>
                 {product.originalPrice && (
@@ -90,9 +90,8 @@ export function ProductDetail({ product, isOpen, onClose, onAddToCart }: Product
                       <button
                         key={idx}
                         onClick={() => setSelectedColor(idx)}
-                        className={`w-10 h-10 rounded-full border-2 ${
-                          selectedColor === idx ? 'border-amber-700' : 'border-gray-200'
-                        }`}
+                        className={`w-10 h-10 rounded-full border-2 ${selectedColor === idx ? 'border-amber-700' : 'border-gray-200'
+                          }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
@@ -110,11 +109,10 @@ export function ProductDetail({ product, isOpen, onClose, onAddToCart }: Product
                         key={size}
                         type="button"
                         onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 text-sm border rounded-full transition-colors ${
-                          selectedSize === size
+                        className={`px-4 py-2 text-sm border rounded-full transition-colors ${selectedSize === size
                             ? 'border-amber-700 bg-amber-700 text-white'
                             : 'border-gray-300 text-gray-800 hover:border-amber-700'
-                        }`}
+                          }`}
                       >
                         {size}
                       </button>

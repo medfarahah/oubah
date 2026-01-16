@@ -1,15 +1,58 @@
-import { useState } from 'react';
-import { getOrders } from '../../data/orders';
-import { getProducts } from '../../data/products';
-import { FileText, Download, Calendar, Filter, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, Calendar, Filter, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { api } from '../../../lib/api';
+import { Order, Product } from '../../types';
 
 export function ReportsManagement() {
-  const [reportType, setReportType] = useState<'sales' | 'products' | 'customers'>('sales');
+  const [reportType, setReportType] = useState<'sales' | 'products'>('sales');
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('all');
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
-  const orders = getOrders();
-  const products = getProducts();
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [ordersRes, productsRes] = await Promise.all([
+        api.getOrders(),
+        api.getProducts()
+      ]);
+
+      if (ordersRes.success && ordersRes.data) {
+        const convertedOrders: Order[] = ordersRes.data.map((o: any) => ({
+          id: o.id,
+          items: o.items?.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.product?.name || 'Unknown Product',
+            price: item.price,
+            quantity: item.quantity,
+          })) || [],
+          subtotal: o.subtotal || 0,
+          shipping: o.shipping || 0,
+          total: o.total || 0,
+          orderDate: o.createdAt ? new Date(o.createdAt) : new Date(),
+          status: o.status || 'pending',
+          shippingInfo: {
+            email: o.email || '',
+          }
+        })) as Order[];
+        setOrders(convertedOrders);
+      }
+
+      if (productsRes.success && productsRes.data) {
+        setProducts(productsRes.data as Product[]);
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateSalesReport = () => {
     const filteredOrders = filterOrdersByDate(orders);
@@ -27,7 +70,6 @@ export function ReportsManagement() {
   };
 
   const generateProductsReport = () => {
-    const orders = getOrders();
     const productSales = new Map<string, { name: string; sold: number; revenue: number }>();
 
     orders.forEach((order) => {
@@ -44,24 +86,7 @@ export function ReportsManagement() {
     return Array.from(productSales.values()).sort((a, b) => b.revenue - a.revenue);
   };
 
-  const generateCustomersReport = () => {
-    const orders = getOrders();
-    const customerMap = new Map<string, { name: string; email: string; orders: number; total: number }>();
 
-    orders.forEach((order) => {
-      const email = order.shippingInfo.email;
-      const name = `${order.shippingInfo.firstName} ${order.shippingInfo.lastName}`;
-      const current = customerMap.get(email) || { name, email, orders: 0, total: 0 };
-      customerMap.set(email, {
-        name,
-        email,
-        orders: current.orders + 1,
-        total: current.total + order.total,
-      });
-    });
-
-    return Array.from(customerMap.values()).sort((a, b) => b.total - a.total);
-  };
 
   const filterOrdersByDate = (ordersList: typeof orders) => {
     const now = new Date();
@@ -102,20 +127,13 @@ export function ReportsManagement() {
         data += `${order.id} - $${order.total.toFixed(2)} - ${new Date(order.orderDate).toLocaleDateString()}\n`;
       });
       filename = `sales-report-${dateRange}-${Date.now()}.txt`;
-    } else if (reportType === 'products') {
+    } else {
       const report = generateProductsReport();
       data = 'Products Sales Report\n\n';
       report.forEach((product) => {
         data += `${product.name}: ${product.sold} sold - $${product.revenue.toFixed(2)} revenue\n`;
       });
       filename = `products-report-${Date.now()}.txt`;
-    } else {
-      const report = generateCustomersReport();
-      data = 'Customers Report\n\n';
-      report.forEach((customer) => {
-        data += `${customer.name} (${customer.email}): ${customer.orders} orders - $${customer.total.toFixed(2)} total\n`;
-      });
-      filename = `customers-report-${Date.now()}.txt`;
     }
 
     const blob = new Blob([data], { type: 'text/plain' });
@@ -143,127 +161,118 @@ export function ReportsManagement() {
         </Button>
       </div>
 
-      {/* Report Type Selector */}
-      <div className="bg-white rounded-xl border border-gray-200/50 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Filter className="w-5 h-5 text-gray-400" />
-          <h3 className="font-semibold text-gray-900">Report Type</h3>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200/50">
+          <Loader2 className="w-10 h-10 text-amber-600 animate-spin mb-4" />
+          <p className="text-gray-500 font-medium">Preparing reports...</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { id: 'sales', label: 'Sales Report', icon: TrendingUp },
-            { id: 'products', label: 'Products Report', icon: FileText },
-            { id: 'customers', label: 'Customers Report', icon: FileText },
-          ].map((type) => {
-            const Icon = type.icon;
-            return (
-              <button
-                key={type.id}
-                onClick={() => setReportType(type.id as any)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  reportType === type.id
-                    ? 'border-amber-500 bg-amber-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <Icon className={`w-6 h-6 mb-2 ${reportType === type.id ? 'text-amber-600' : 'text-gray-400'}`} />
-                <p className={`font-semibold ${reportType === type.id ? 'text-amber-900' : 'text-gray-700'}`}>
-                  {type.label}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Date Range Selector */}
-      <div className="bg-white rounded-xl border border-gray-200/50 p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <h3 className="font-semibold text-gray-900">Date Range</h3>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {[
-            { id: 'today', label: 'Today' },
-            { id: 'week', label: 'Last 7 Days' },
-            { id: 'month', label: 'Last Month' },
-            { id: 'year', label: 'Last Year' },
-            { id: 'all', label: 'All Time' },
-          ].map((range) => (
-            <button
-              key={range.id}
-              onClick={() => setDateRange(range.id as any)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                dateRange === range.id
-                  ? 'bg-amber-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {range.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Report Preview */}
-      <div className="bg-white rounded-xl border border-gray-200/50 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Report Preview</h3>
-        <div className="space-y-4">
-          {reportType === 'sales' && (
-            <div>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${generateSalesReport().totalRevenue.toFixed(2)}
-                  </p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">{generateSalesReport().totalOrders}</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Avg Order Value</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${generateSalesReport().averageOrder.toFixed(2)}
-                  </p>
-                </div>
-              </div>
+      ) : (
+        <>
+          {/* Report Type Selector */}
+          <div className="bg-white rounded-xl border border-gray-200/50 p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Filter className="w-5 h-5 text-gray-400" />
+              <h3 className="font-semibold text-gray-900">Report Type</h3>
             </div>
-          )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { id: 'sales', label: 'Sales Report', icon: TrendingUp },
+                { id: 'products', label: 'Products Report', icon: FileText },
+              ].map((type) => {
+                const Icon = type.icon;
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => setReportType(type.id as any)}
+                    className={`p-4 rounded-xl border-2 transition-all ${reportType === type.id
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <Icon className={`w-6 h-6 mb-2 ${reportType === type.id ? 'text-amber-600' : 'text-gray-400'}`} />
+                    <p className={`font-semibold ${reportType === type.id ? 'text-amber-900' : 'text-gray-700'}`}>
+                      {type.label}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          {reportType === 'products' && (
-            <div className="space-y-2">
-              {generateProductsReport().slice(0, 10).map((product, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium text-gray-900">{product.name}</span>
-                  <div className="text-right">
-                    <span className="font-bold text-gray-900">${product.revenue.toFixed(2)}</span>
-                    <span className="text-sm text-gray-500 ml-2">({product.sold} sold)</span>
-                  </div>
-                </div>
+          {/* Date Range Selector */}
+          <div className="bg-white rounded-xl border border-gray-200/50 p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Calendar className="w-5 h-5 text-gray-400" />
+              <h3 className="font-semibold text-gray-900">Date Range</h3>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { id: 'today', label: 'Today' },
+                { id: 'week', label: 'Last 7 Days' },
+                { id: 'month', label: 'Last Month' },
+                { id: 'year', label: 'Last Year' },
+                { id: 'all', label: 'All Time' },
+              ].map((range) => (
+                <button
+                  key={range.id}
+                  onClick={() => setDateRange(range.id as any)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${dateRange === range.id
+                    ? 'bg-amber-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  {range.label}
+                </button>
               ))}
             </div>
-          )}
+          </div>
 
-          {reportType === 'customers' && (
-            <div className="space-y-2">
-              {generateCustomersReport().slice(0, 10).map((customer, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
-                    <p className="text-sm text-gray-500">{customer.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-bold text-gray-900">${customer.total.toFixed(2)}</span>
-                    <span className="text-sm text-gray-500 ml-2">({customer.orders} orders)</span>
+          {/* Report Preview */}
+          <div className="bg-white rounded-xl border border-gray-200/50 p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Report Preview</h3>
+            <div className="space-y-4">
+              {reportType === 'sales' && (
+                <div>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Total Revenue</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        ${generateSalesReport().totalRevenue.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Total Orders</p>
+                      <p className="text-2xl font-bold text-gray-900">{generateSalesReport().totalOrders}</p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-500 mb-1">Avg Order Value</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        ${generateSalesReport().averageOrder.toFixed(2)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
+
+              {reportType === 'products' && (
+                <div className="space-y-2">
+                  {generateProductsReport().slice(0, 10).map((product, index) => (
+                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium text-gray-900">{product.name}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-gray-900">${product.revenue.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500 ml-2">({product.sold} sold)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

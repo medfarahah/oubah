@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ShoppingBag, Package, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ShoppingBag, Package, DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight, Users } from 'lucide-react';
 import { api } from '../../../lib/api';
 
 export function DashboardOverview() {
@@ -7,9 +7,11 @@ export function DashboardOverview() {
     totalOrders: 0,
     totalRevenue: 0,
     totalProducts: 0,
+    totalCustomers: 0,
     averageOrderValue: 0,
     revenueChange: 12.5,
     ordersChange: 8.2,
+    customersChange: 5.4,
   });
   const [loading, setLoading] = useState(true);
 
@@ -20,14 +22,18 @@ export function DashboardOverview() {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const [ordersResponse, productsResponse] = await Promise.all([
+      const [ordersResponse, productsResponse, customersResponse] = await Promise.all([
         api.getOrders(),
         api.getProducts(),
+        api.getCustomers(),
       ]);
 
-      if (ordersResponse.success && ordersResponse.data && productsResponse.success && productsResponse.data) {
+      if (ordersResponse.success && ordersResponse.data &&
+        productsResponse.success && productsResponse.data &&
+        customersResponse.success && customersResponse.data) {
         const orders = ordersResponse.data;
         const products = productsResponse.data;
+        const customers = customersResponse.data;
         const totalOrders = orders.length;
         const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
         const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -36,9 +42,11 @@ export function DashboardOverview() {
           totalOrders,
           totalRevenue,
           totalProducts: products.length,
+          totalCustomers: customers.length,
           averageOrderValue,
           revenueChange: 12.5,
           ordersChange: 8.2,
+          customersChange: 5.4,
         });
       }
     } catch (error) {
@@ -58,6 +66,7 @@ export function DashboardOverview() {
     bgColor: string;
     iconBg: string;
     iconColor: string;
+    textColor: string;
   };
 
   const statCards: StatCard[] = [
@@ -69,8 +78,9 @@ export function DashboardOverview() {
       icon: DollarSign,
       gradient: 'from-green-500 to-emerald-600',
       bgColor: 'bg-green-50',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
+      iconBg: 'bg-green-50',
+      iconColor: 'text-green-500',
+      textColor: 'text-green-600',
     },
     {
       title: 'Total Orders',
@@ -80,8 +90,9 @@ export function DashboardOverview() {
       icon: ShoppingBag,
       gradient: 'from-blue-500 to-indigo-600',
       bgColor: 'bg-blue-50',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-500',
+      textColor: 'text-blue-600',
     },
     {
       title: 'Total Products',
@@ -91,8 +102,21 @@ export function DashboardOverview() {
       icon: Package,
       gradient: 'from-purple-500 to-violet-600',
       bgColor: 'bg-purple-50',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
+      iconBg: 'bg-purple-50',
+      iconColor: 'text-purple-500',
+      textColor: 'text-purple-600',
+    },
+    {
+      title: 'Total Customers',
+      value: stats.totalCustomers.toString(),
+      change: `+${stats.customersChange}%`,
+      changeType: 'up',
+      icon: Users,
+      gradient: 'from-amber-500 to-orange-600',
+      bgColor: 'bg-amber-50',
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-500',
+      textColor: 'text-amber-600',
     },
     {
       title: 'Avg Order Value',
@@ -100,10 +124,11 @@ export function DashboardOverview() {
       change: '+5.3%',
       changeType: 'up',
       icon: TrendingUp,
-      gradient: 'from-amber-500 to-orange-600',
-      bgColor: 'bg-amber-50',
-      iconBg: 'bg-amber-100',
-      iconColor: 'text-amber-600',
+      gradient: 'from-rose-500 to-pink-600',
+      bgColor: 'bg-rose-50',
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-500',
+      textColor: 'text-rose-600',
     },
   ];
 
@@ -116,33 +141,31 @@ export function DashboardOverview() {
           return (
             <div
               key={index}
-              className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-300 transition-all duration-300 group relative overflow-hidden"
+              className="bg-white rounded-[24px] border border-slate-100 p-7 shadow-sm shadow-slate-200/50 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group"
             >
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.gradient} opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500`} />
-
               <div className="relative">
-                <div className="flex items-start justify-between mb-6">
-                  <div className={`${stat.iconBg} p-3.5 rounded-xl shadow-sm`}>
-                    <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                <div className="flex items-center justify-between mb-8">
+                  <div className={`${stat.iconBg} w-12 h-12 rounded-xl flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 ${stat.iconColor}`} />
                   </div>
                   {stat.changeType === 'up' ? (
-                    <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                    <div className="flex items-center gap-1 text-emerald-500 bg-emerald-50 px-2 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase">
                       <ArrowUpRight size={12} strokeWidth={3} />
                       {stat.change}
                     </div>
                   ) : stat.changeType === 'down' ? (
-                    <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                    <div className="flex items-center gap-1 text-red-500 bg-red-50 px-2 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase">
                       <ArrowDownRight size={12} strokeWidth={3} />
                       {stat.change}
                     </div>
                   ) : (
-                    <div className="text-xs text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg font-bold">
+                    <div className="text-[10px] text-slate-400 bg-slate-50 px-2.5 py-1.5 rounded-lg font-black tracking-wider uppercase">
                       {stat.change}
                     </div>
                   )}
                 </div>
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{stat.title}</h3>
-                <p className={`text-3xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}>
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{stat.title}</h3>
+                <p className={`text-3xl font-black ${stat.textColor}`}>
                   {stat.value}
                 </p>
               </div>
@@ -153,39 +176,39 @@ export function DashboardOverview() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl border border-amber-200 p-6 hover:shadow-lg hover:shadow-amber-200/50 transition-all duration-300 cursor-pointer group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
-              <Package className="w-6 h-6 text-white" />
+        <div className="bg-amber-50/50 rounded-[24px] border border-amber-100/50 p-7 hover:shadow-lg hover:shadow-amber-200/20 transition-all duration-300 cursor-pointer group">
+          <div className="flex items-center gap-5 mb-5">
+            <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
+              <Package className="w-7 h-7 text-white" />
             </div>
-            <h4 className="font-black text-slate-900 text-lg">Products</h4>
+            <h4 className="font-black text-slate-900 text-xl">Products</h4>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Add, edit, and manage your product catalog with ease
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl border border-blue-200 p-6 hover:shadow-lg hover:shadow-blue-200/50 transition-all duration-300 cursor-pointer group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-              <ShoppingBag className="w-6 h-6 text-white" />
+        <div className="bg-blue-50/50 rounded-[24px] border border-blue-100/50 p-7 hover:shadow-lg hover:shadow-blue-200/20 transition-all duration-300 cursor-pointer group">
+          <div className="flex items-center gap-5 mb-5">
+            <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-7 h-7 text-white" />
             </div>
-            <h4 className="font-black text-slate-900 text-lg">Orders</h4>
+            <h4 className="font-black text-slate-900 text-xl">Orders</h4>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">
-            View and manage customer orders, update statuses
+          <p className="text-sm text-slate-600 leading-relaxed">
+            View and manage store orders, update statuses
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl border border-purple-200 p-6 hover:shadow-lg hover:shadow-purple-200/50 transition-all duration-300 cursor-pointer group">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-6 h-6 text-white" />
+        <div className="bg-purple-50/50 rounded-[24px] border border-purple-100/50 p-7 hover:shadow-lg hover:shadow-purple-200/20 transition-all duration-300 cursor-pointer group">
+          <div className="flex items-center gap-5 mb-5">
+            <div className="w-14 h-14 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+              <TrendingUp className="w-7 h-7 text-white" />
             </div>
-            <h4 className="font-black text-slate-900 text-lg">Analytics</h4>
+            <h4 className="font-black text-slate-900 text-xl">Analytics</h4>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">
-            Track customer activity and view detailed analytics
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Track business performance and view detailed analytics
           </p>
         </div>
       </div>
@@ -202,7 +225,7 @@ export function DashboardOverview() {
           <div className="flex-1">
             <h3 className="text-2xl font-black mb-2">Welcome to NŪRA Admin</h3>
             <p className="text-slate-300 leading-relaxed mb-6">
-              Manage your NŪRA Collection store efficiently with powerful tools and insights. Monitor sales, manage inventory, and track customer activity all in one place.
+              Manage your NŪRA Collection store efficiently with powerful tools and insights. Monitor sales, manage inventory, and track orders all in one place.
             </p>
             <div className="flex flex-wrap gap-3">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
@@ -211,6 +234,9 @@ export function DashboardOverview() {
               </div>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                 <span className="text-sm font-semibold">{stats.totalProducts} Products Active</span>
+              </div>
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
+                <span className="text-sm font-semibold">{stats.totalCustomers} Customers</span>
               </div>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                 <span className="text-sm font-semibold">{stats.totalOrders} Total Orders</span>

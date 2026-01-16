@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Product } from '../../types';
-import { Plus, Edit, Trash2, X, Save, Search, Filter, Palette } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Save, Search, Filter, Palette, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -12,8 +12,14 @@ export function ProductsManagement() {
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<Product>>({});
+  const [formData, setFormData] = useState<Partial<Product>>({ categories: [] });
   const [searchQuery, setSearchQuery] = useState('');
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+
+  const PREDEFINED_CATEGORIES = [
+    'SILK HIJABS', 'CHIFFON HIJABS', 'JERSEY HIJABS',
+    'ABAYAS', 'PERFUMES', 'ACCESSORIES', 'CLOTHING', 'BEAUTY'
+  ];
 
   useEffect(() => {
     loadProducts();
@@ -26,22 +32,14 @@ export function ProductsManagement() {
       if (response.success && response.data) {
         // Convert API product format to frontend Product format
         const convertedProducts: Product[] = response.data.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          category: p.category || '',
-          price: p.price,
-          image: p.imageUrl || p.image,
-          description: p.description || '',
-          material: p.material,
+          ...p,
+          imageUrl: p.imageUrl,
+          categories: p.categories || [],
           colors: p.colors || [],
-          sizes: p.sizes || ['One Size'],
-          isNew: p.isNew || false,
-          sale: p.sale || false,
-          originalPrice: p.originalPrice,
         }));
         setProductsState(convertedProducts);
       } else {
-        toast.error(response.error || 'Failed to load products');
+        toast.error((response as any).error || 'Failed to load products');
       }
     } catch (error) {
       console.error('Error loading products:', error);
@@ -55,9 +53,9 @@ export function ProductsManagement() {
     setFormData({
       id: Date.now().toString(),
       name: '',
-      category: '',
+      categories: [],
       price: 0,
-      image: '',
+      imageUrl: '',
       description: '',
       sizes: ['One Size'],
       colors: [],
@@ -91,8 +89,8 @@ export function ProductsManagement() {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.category || !formData.price || !formData.image) {
-      toast.error('Please fill in all required fields');
+    if (!formData.name || !formData.categories || formData.categories.length === 0 || !formData.price || !formData.imageUrl) {
+      toast.error('Please fill in all required fields (Name, Price, Image, and at least one Category)');
       return;
     }
 
@@ -101,8 +99,8 @@ export function ProductsManagement() {
         const response = await api.createProduct({
           name: formData.name!,
           price: formData.price!,
-          imageUrl: formData.image!,
-          category: formData.category!,
+          imageUrl: formData.imageUrl!,
+          categories: formData.categories!,
           description: formData.description,
           material: formData.material,
           colors: formData.colors || [],
@@ -116,14 +114,14 @@ export function ProductsManagement() {
           await loadProducts(); // Reload products from API
           toast.success('Product added successfully');
         } else {
-          toast.error(response.error || 'Failed to add product');
+          toast.error((response as any).error || 'Failed to add product');
         }
       } else if (editingId) {
         const response = await api.updateProduct(editingId, {
           name: formData.name,
           price: formData.price,
-          imageUrl: formData.image,
-          category: formData.category,
+          imageUrl: formData.imageUrl,
+          categories: formData.categories,
           description: formData.description,
           material: formData.material,
           colors: formData.colors,
@@ -137,13 +135,13 @@ export function ProductsManagement() {
           await loadProducts(); // Reload products from API
           toast.success('Product updated successfully');
         } else {
-          toast.error(response.error || 'Failed to update product');
+          toast.error((response as any).error || 'Failed to update product');
         }
       }
 
       setIsAdding(false);
       setEditingId(null);
-      setFormData({});
+      setFormData({ categories: [] });
     } catch (error) {
       console.error('Error saving product:', error);
       toast.error('Failed to save product');
@@ -158,7 +156,7 @@ export function ProductsManagement() {
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    (p.categories && p.categories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   return (
@@ -216,14 +214,96 @@ export function ProductsManagement() {
                 className="border-gray-200 focus:border-amber-500"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
-              <Input
-                value={formData.category || ''}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="Enter category"
-                className="border-gray-200 focus:border-amber-500"
-              />
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Categories *</label>
+              <div className="space-y-4">
+                {/* Predefined Categories Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {PREDEFINED_CATEGORIES.map((cat) => {
+                    const isSelected = formData.categories?.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.categories || [];
+                          if (isSelected) {
+                            setFormData({ ...formData, categories: current.filter(c => c !== cat) });
+                          } else {
+                            setFormData({ ...formData, categories: [...current, cat] });
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all border-2 ${isSelected
+                            ? 'bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-200'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-amber-400'
+                          }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Category Input */}
+                <div className="flex gap-2">
+                  <Input
+                    value={newCategoryInput}
+                    onChange={(e) => setNewCategoryInput(e.target.value.toUpperCase())}
+                    placeholder="Add custom category..."
+                    className="flex-1 border-gray-200 focus:border-amber-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newCategoryInput.trim()) {
+                          const current = formData.categories || [];
+                          if (!current.includes(newCategoryInput.trim())) {
+                            setFormData({ ...formData, categories: [...current, newCategoryInput.trim()] });
+                            setNewCategoryInput('');
+                          } else {
+                            toast.error('Category already added');
+                          }
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (newCategoryInput.trim()) {
+                        const current = formData.categories || [];
+                        if (!current.includes(newCategoryInput.trim())) {
+                          setFormData({ ...formData, categories: [...current, newCategoryInput.trim()] });
+                          setNewCategoryInput('');
+                        } else {
+                          toast.error('Category already added');
+                        }
+                      }
+                    }}
+                    className="bg-slate-900 text-white"
+                  >
+                    Add
+                  </Button>
+                </div>
+
+                {/* Selected Categories Display (if any not in predefined) */}
+                {formData.categories?.some(cat => !PREDEFINED_CATEGORIES.includes(cat)) && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <p className="w-full text-[10px] font-black text-slate-400 uppercase tracking-widest">Custom Categories:</p>
+                    {formData.categories.filter(cat => !PREDEFINED_CATEGORIES.includes(cat)).map(cat => (
+                      <div key={cat} className="flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1 rounded-lg border border-slate-200 text-xs font-bold">
+                        {cat}
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, categories: formData.categories?.filter(c => c !== cat) })}
+                          className="text-slate-400 hover:text-red-500"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Price ($) *</label>
@@ -253,16 +333,16 @@ export function ProductsManagement() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Product Image *</label>
               <div className="space-y-3">
                 {/* Image Preview */}
-                {formData.image && (
+                {formData.imageUrl && (
                   <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
                     <img
-                      src={formData.image}
+                      src={formData.imageUrl}
                       alt="Product preview"
                       className="w-full h-full object-contain"
                     />
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, image: '' })}
+                      onClick={() => setFormData({ ...formData, imageUrl: '' })}
                       className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
                     >
                       <X size={16} />
@@ -283,7 +363,7 @@ export function ProductsManagement() {
                           if (file) {
                             const reader = new FileReader();
                             reader.onloadend = () => {
-                              setFormData({ ...formData, image: reader.result as string });
+                              setFormData({ ...formData, imageUrl: reader.result as string });
                             };
                             reader.readAsDataURL(file);
                           }
@@ -294,7 +374,7 @@ export function ProductsManagement() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <span className="text-sm text-gray-600">
-                          {formData.image ? 'Change Image' : 'Upload from Device'}
+                          {formData.imageUrl ? 'Change Image' : 'Upload from Device'}
                         </span>
                         <span className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</span>
                       </div>
@@ -313,8 +393,8 @@ export function ProductsManagement() {
                 </div>
 
                 <Input
-                  value={formData.image?.startsWith('data:') ? '' : (formData.image || '')}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  value={formData.imageUrl?.startsWith('data:') ? '' : (formData.imageUrl || '')}
+                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                   className="border-gray-200 focus:border-amber-500"
                 />
@@ -522,11 +602,10 @@ export function ProductsManagement() {
                             }
                           }}
                           disabled={isAdded}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all ${
-                            isAdded
-                              ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed'
-                              : 'border-gray-200 hover:border-amber-500 hover:bg-amber-50'
-                          }`}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all ${isAdded
+                            ? 'border-gray-300 bg-gray-100 opacity-50 cursor-not-allowed'
+                            : 'border-gray-200 hover:border-amber-500 hover:bg-amber-50'
+                            }`}
                           title={isAdded ? 'Already added' : `Add ${preset.name}`}
                         >
                           <div
@@ -625,7 +704,7 @@ export function ProductsManagement() {
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
                           <ImageWithFallback
-                            src={product.image}
+                            src={product.imageUrl}
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />
@@ -648,7 +727,13 @@ export function ProductsManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600 font-medium">{product.category}</span>
+                      <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                        {product.categories?.map((cat, idx) => (
+                          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-tighter">
+                            {cat}
+                          </span>
+                        )) || <span className="text-gray-400 italic text-xs">No categories</span>}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
