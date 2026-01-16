@@ -4,7 +4,7 @@ let products: Product[] = [
   {
     id: '1',
     name: 'Premium Silk Square Hijab',
-    category: 'SILK HIJABS',
+    categories: ['SILK HIJABS'],
     price: 89,
     imageUrl: 'https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBoaWphYiUyMGZhc2hpb258ZW58MXx8fHwxNzY4MjY0OTM3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Luxurious 100% mulberry silk hijab with a beautiful drape and soft texture. Perfect for special occasions or everyday elegance.',
@@ -16,7 +16,7 @@ let products: Product[] = [
   {
     id: '2',
     name: 'Chiffon Evening Hijab',
-    category: 'CHIFFON HIJABS',
+    categories: ['CHIFFON HIJABS'],
     price: 65,
     originalPrice: 85,
     imageUrl: 'https://images.unsplash.com/photo-1760083545495-b297b1690672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwbW9kZXN0JTIwZmFzaGlvbnxlbnwxfHx8fDE3NjgyNjQ5Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
@@ -29,7 +29,7 @@ let products: Product[] = [
   {
     id: '3',
     name: 'Classic Jersey Hijab',
-    category: 'JERSEY HIJABS',
+    categories: ['JERSEY HIJABS'],
     price: 35,
     imageUrl: 'https://images.unsplash.com/photo-1761660450845-6c3aa8aaf43f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaWxrJTIwc2NhcmYlMjBsdXh1cnl8ZW58MXx8fHwxNzY4MTU0NzU3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Comfortable everyday jersey hijab with excellent stretch and breathability. A wardrobe essential.',
@@ -40,7 +40,7 @@ let products: Product[] = [
   {
     id: '4',
     name: 'Embroidered Luxury Hijab',
-    category: 'EMBROIDERED HIJABS',
+    categories: ['EMBROIDERED HIJABS'],
     price: 125,
     imageUrl: 'https://images.unsplash.com/photo-1536814294574-df49a3cc97bd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNsaW0lMjB3b21hbiUyMGZhc2hpb258ZW58MXx8fHwxNzY4MjY0OTM4fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Exquisite hand-embroidered hijab featuring intricate floral patterns. A true statement piece.',
@@ -52,7 +52,7 @@ let products: Product[] = [
   {
     id: '5',
     name: 'Elegant Abaya Set',
-    category: 'ABAYAS',
+    categories: ['ABAYAS'],
     price: 195,
     imageUrl: 'https://images.unsplash.com/photo-1762376128087-bc29c6df08c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhYmF5YSUyMGZhc2hpb258ZW58MXx8fHwxNzY4MjY0OTM5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Flowing abaya with modern silhouette and subtle embellishments. Designed for sophisticated style.',
@@ -64,7 +64,7 @@ let products: Product[] = [
   {
     id: '6',
     name: 'Satin Luxe Hijab',
-    category: 'SATIN HIJABS',
+    categories: ['SATIN HIJABS'],
     price: 75,
     imageUrl: 'https://images.unsplash.com/photo-1665764045207-a0f035401210?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBmYWJyaWMlMjB0ZXh0dXJlfGVufDF8fHx8MTc2ODE1MzA2NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Smooth satin hijab with beautiful sheen and luxurious feel. Perfect for any occasion.',
@@ -75,7 +75,7 @@ let products: Product[] = [
   {
     id: '7',
     name: 'Modal Blend Hijab',
-    category: 'MODAL HIJABS',
+    categories: ['MODAL HIJABS'],
     price: 55,
     originalPrice: 70,
     imageUrl: 'https://images.unsplash.com/photo-1762605135012-56a59a059e60?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBoaWphYiUyMGZhc2hpb258ZW58MXx8fHwxNzY4MjY0OTM3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
@@ -88,7 +88,7 @@ let products: Product[] = [
   {
     id: '8',
     name: 'Georgette Drape Hijab',
-    category: 'GEORGETTE HIJABS',
+    categories: ['GEORGETTE HIJABS'],
     price: 68,
     imageUrl: 'https://images.unsplash.com/photo-1760083545495-b297b1690672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwbW9kZXN0JTIwZmFzaGlvbnxlbnwxfHx8fDE3NjgyNjQ5Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
     description: 'Flowing georgette hijab with beautiful movement and elegant drape.',

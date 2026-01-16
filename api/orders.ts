@@ -69,7 +69,8 @@ export default async function handler(
             create: items?.map((item: any) => ({
               productId: item.productId || item.id,
               quantity: item.quantity,
-              price: item.price
+              price: item.price,
+              size: item.size || 'One Size'
             })) || []
           }
         },

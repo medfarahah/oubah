@@ -25,14 +25,14 @@ export default async function handler(
     }
 
     if (request.method === 'POST') {
-      const { name, price, imageUrl, category, description, stock } = request.body;
+      const { name, price, imageUrl, categories, description, stock } = request.body;
 
       const product = await prisma.product.create({
         data: {
           name,
           price,
           imageUrl,
-          category,
+          categories: categories || [],
           description,
           inventory: {
             create: {

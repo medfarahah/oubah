@@ -12,7 +12,7 @@ const sampleProducts = [
     name: 'Elegant Abaya - Classic Black',
     price: 89.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633312688-8b5e3b2b8b3f?w=500',
-    category: 'Abayas',
+    categories: ['Abayas'],
     description: 'A timeless classic black abaya with elegant design and comfortable fit.',
     material: 'Premium Polyester',
     colors: ['Black', 'Navy', 'Brown'],
@@ -24,7 +24,7 @@ const sampleProducts = [
     name: 'Modern Hijab Set - Pastel Collection',
     price: 45.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=500',
-    category: 'Hijabs',
+    categories: ['Hijabs'],
     description: 'Beautiful pastel colored hijab set with matching undercap.',
     material: 'Cotton Blend',
     colors: ['Pink', 'Mint', 'Lavender', 'Beige'],
@@ -36,7 +36,7 @@ const sampleProducts = [
     name: 'Luxury Kaftan - Gold Embroidery',
     price: 149.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=500',
-    category: 'Kaftans',
+    categories: ['Kaftans'],
     description: 'Stunning gold embroidered kaftan perfect for special occasions.',
     material: 'Silk Blend',
     colors: ['Gold', 'Silver', 'Rose Gold'],
@@ -49,7 +49,7 @@ const sampleProducts = [
     name: 'Casual Jilbab - Everyday Wear',
     price: 65.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633312688-8b5e3b2b8b3f?w=500',
-    category: 'Jilbabs',
+    categories: ['Jilbabs'],
     description: 'Comfortable and stylish jilbab for everyday wear.',
     material: 'Cotton',
     colors: ['Gray', 'Navy', 'Black', 'Beige'],
@@ -61,7 +61,7 @@ const sampleProducts = [
     name: 'Premium Niqab Set',
     price: 35.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=500',
-    category: 'Niqabs',
+    categories: ['Niqabs'],
     description: 'High-quality niqab set with adjustable straps.',
     material: 'Breathable Fabric',
     colors: ['Black', 'Navy', 'Brown'],
@@ -73,7 +73,7 @@ const sampleProducts = [
     name: 'Designer Abaya - Embroidered',
     price: 129.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633312688-8b5e3b2b8b3f?w=500',
-    category: 'Abayas',
+    categories: ['Abayas'],
     description: 'Beautifully embroidered designer abaya with intricate details.',
     material: 'Premium Fabric',
     colors: ['Black', 'Navy', 'Maroon'],
@@ -85,7 +85,7 @@ const sampleProducts = [
     name: 'Sport Hijab - Active Wear',
     price: 29.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=500',
-    category: 'Hijabs',
+    categories: ['Hijabs'],
     description: 'Moisture-wicking sport hijab perfect for active lifestyle.',
     material: 'Polyester',
     colors: ['Black', 'Gray', 'Navy', 'Pink'],
@@ -97,7 +97,7 @@ const sampleProducts = [
     name: 'Evening Kaftan - Party Collection',
     price: 179.99,
     imageUrl: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=500',
-    category: 'Kaftans',
+    categories: ['Kaftans'],
     description: 'Elegant evening kaftan with sequin details for special events.',
     material: 'Silk',
     colors: ['Black', 'Navy', 'Burgundy'],
@@ -144,7 +144,7 @@ async function seedDatabase() {
     const createdProducts = [];
     for (const productData of sampleProducts) {
       const { originalPrice, ...productFields } = productData;
-      
+
       // Check if product exists by name
       const existing = await prisma.product.findFirst({
         where: { name: productData.name },

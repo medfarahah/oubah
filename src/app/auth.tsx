@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         country: userData.country,
       });
     } else {
-      throw new Error(response.error || 'Login failed');
+      throw new Error((response as any).error || 'Login failed');
     }
   };
 
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: userData.role === 'admin' ? 'admin' : 'customer',
       });
     } else {
-      throw new Error(response.error || 'Registration failed');
+      throw new Error((response as any).error || 'Registration failed');
     }
   };
 
@@ -98,14 +98,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: userData.id,
           name: userData.name || 'Admin',
           email: userData.email,
-          email: userData.email, // duplicate key, but harmless
           role: 'admin',
         });
       } else {
         throw new Error('Access denied. Admin privileges required.');
       }
     } else {
-      throw new Error(response.error || 'Invalid admin credentials');
+      throw new Error((response as any).error || 'Invalid admin credentials');
     }
   };
 
@@ -116,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear user state
       setUser(null);
       console.log('User logged out successfully');
-      
+
       // Optional: Reload page to ensure clean state (uncomment if needed)
       // window.location.href = '/';
     } catch (error) {
