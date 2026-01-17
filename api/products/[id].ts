@@ -87,6 +87,13 @@ export default async function handler(
     return response.status(405).json({ success: false, error: 'Method not allowed' });
   } catch (error) {
     console.error('Product API error:', error);
-    return response.status(500).json({ success: false, error: 'Internal server error' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    return response.status(500).json({ 
+      success: false, 
+      error: 'Internal server error',
+      message: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+    });
   }
 }

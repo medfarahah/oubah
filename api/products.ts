@@ -15,6 +15,15 @@ export default async function handler(
     return response.status(200).end();
   }
 
+  // Check database connection
+  if (!process.env.DATABASE_URL) {
+    return response.status(500).json({ 
+      success: false, 
+      error: 'Database configuration error',
+      message: 'DATABASE_URL is not set'
+    });
+  }
+
   try {
     if (request.method === 'GET') {
       const products = await prisma.product.findMany({
@@ -67,6 +76,13 @@ export default async function handler(
     return response.status(405).json({ success: false, error: 'Method not allowed' });
   } catch (error) {
     console.error('Products API error:', error);
-    return response.status(500).json({ success: false, error: 'Internal server error' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    return response.status(500).json({ 
+      success: false, 
+      error: 'Internal server error',
+      message: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { stack: errorStack })
+    });
   }
 }
