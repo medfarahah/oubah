@@ -16,7 +16,10 @@ export default async function handler(
     return response.status(200).end();
   }
 
-  const { id } = request.query;
+  // Handle dynamic route parameter - can be string or array
+  const id = Array.isArray(request.query.id) 
+    ? request.query.id[0] 
+    : request.query.id;
 
   if (!id || typeof id !== 'string') {
     return response.status(400).json({ success: false, error: 'Product ID is required' });
