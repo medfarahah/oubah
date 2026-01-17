@@ -36,7 +36,7 @@ export default async function handler(
 
     if (request.method === 'PUT') {
       const { 
-        stock, name, price, imageUrl, category, categories,
+        stock, name, price, imageUrl, categories,
         description, material, colors, sizes, isNew, sale, originalPrice
       } = request.body;
 
@@ -45,7 +45,6 @@ export default async function handler(
       if (name !== undefined) updateData.name = name;
       if (price !== undefined) updateData.price = price;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
-      if (category !== undefined) updateData.category = category;
       if (categories !== undefined) updateData.categories = categories;
       if (description !== undefined) updateData.description = description;
       if (material !== undefined) updateData.material = material;

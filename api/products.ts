@@ -26,7 +26,7 @@ export default async function handler(
 
     if (request.method === 'POST') {
       const { 
-        name, price, imageUrl, category, categories, 
+        name, price, imageUrl, categories, 
         description, material, colors, sizes, 
         isNew, sale, originalPrice, stock 
       } = request.body;
@@ -43,7 +43,6 @@ export default async function handler(
           name,
           price,
           imageUrl,
-          category: category || null,
           categories: categories || [],
           description: description || null,
           material: material || null,
