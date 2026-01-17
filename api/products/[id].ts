@@ -35,17 +35,36 @@ export default async function handler(
     }
 
     if (request.method === 'PUT') {
-      const { stock, ...data } = request.body;
+      const { 
+        stock, name, price, imageUrl, category, categories,
+        description, material, colors, sizes, isNew, sale, originalPrice
+      } = request.body;
+
+      // Build update data object
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (price !== undefined) updateData.price = price;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (category !== undefined) updateData.category = category;
+      if (categories !== undefined) updateData.categories = categories;
+      if (description !== undefined) updateData.description = description;
+      if (material !== undefined) updateData.material = material;
+      if (colors !== undefined) updateData.colors = colors;
+      if (sizes !== undefined) updateData.sizes = sizes;
+      if (isNew !== undefined) updateData.isNew = isNew;
+      if (sale !== undefined) updateData.sale = sale;
+      if (originalPrice !== undefined) updateData.originalPrice = originalPrice;
 
       const product = await prisma.product.update({
         where: { id },
-        data: data,
+        data: updateData,
       });
 
+      // Update inventory if stock provided
       if (stock !== undefined) {
         await prisma.inventory.upsert({
           where: { productId: product.id },
-          create: { productId: product.id, quantity: stock },
+          create: { productId: product.id, quantity: stock, lowStock: 5 },
           update: { quantity: stock }
         });
       }

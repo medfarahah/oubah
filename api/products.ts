@@ -25,18 +25,37 @@ export default async function handler(
     }
 
     if (request.method === 'POST') {
-      const { name, price, imageUrl, categories, description, stock } = request.body;
+      const { 
+        name, price, imageUrl, category, categories, 
+        description, material, colors, sizes, 
+        isNew, sale, originalPrice, stock 
+      } = request.body;
+
+      if (!name || !price || !imageUrl) {
+        return response.status(400).json({
+          success: false,
+          error: 'Name, price, and imageUrl are required',
+        });
+      }
 
       const product = await prisma.product.create({
         data: {
           name,
           price,
           imageUrl,
+          category: category || null,
           categories: categories || [],
-          description,
+          description: description || null,
+          material: material || null,
+          colors: colors || [],
+          sizes: sizes || ['One Size'],
+          isNew: isNew || false,
+          sale: sale || false,
+          originalPrice: originalPrice || null,
           inventory: {
             create: {
-              quantity: stock || 0
+              quantity: stock || 0,
+              lowStock: 5,
             }
           }
         },

@@ -17,21 +17,69 @@ export default async function handler(
 
   try {
     if (request.method === 'GET') {
+      const { email, status, userId } = request.query;
+      
+      const where: any = {};
+      if (email) where.email = email as string;
+      if (status) where.status = status as string;
+      if (userId) where.userId = userId as string;
+
       const orders = await prisma.order.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
-        include: { items: true, customer: true }
+        include: { 
+          items: {
+            include: {
+              product: true,
+            }
+          }, 
+          customer: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            }
+          }
+        }
       });
       return response.json({ success: true, data: orders, count: orders.length });
     }
 
     if (request.method === 'POST') {
       const {
-        customer, phone, email,
+        customerName, customer, phone, email,
         items,
         total, subtotal, shipping,
         address, apartment, city, state, zipCode, country,
-        userId
+        userId, paymentMethod, deliveryNotes
       } = request.body;
+
+      // Validation
+      if (!customerName && !customer) {
+        return response.status(400).json({
+          success: false,
+          error: 'Customer name is required',
+        });
+      }
+      if (!phone) {
+        return response.status(400).json({
+          success: false,
+          error: 'Phone number is required',
+        });
+      }
+      if (!total || typeof total !== 'number' || total <= 0) {
+        return response.status(400).json({
+          success: false,
+          error: 'Valid total amount is required',
+        });
+      }
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return response.status(400).json({
+          success: false,
+          error: 'Order must contain items',
+        });
+      }
 
       let customerId = null;
       if (email) {
@@ -40,8 +88,8 @@ export default async function handler(
           existingCust = await prisma.customer.create({
             data: {
               email,
-              firstName: customer?.split(' ')[0] || '',
-              lastName: customer?.split(' ').slice(1).join(' ') || '',
+              firstName: (customerName || customer)?.split(' ')[0] || '',
+              lastName: (customerName || customer)?.split(' ').slice(1).join(' ') || '',
               phone
             }
           });
@@ -51,7 +99,7 @@ export default async function handler(
 
       const order = await prisma.order.create({
         data: {
-          customerName: customer,
+          customerName: customerName || customer,
           phone,
           email,
           total,
@@ -65,16 +113,24 @@ export default async function handler(
           country,
           userId,
           customerId,
+          paymentMethod,
+          deliveryNotes,
           items: {
             create: items?.map((item: any) => ({
               productId: item.productId || item.id,
               quantity: item.quantity,
               price: item.price,
-              size: item.size || 'One Size'
+              size: item.size || null,
             })) || []
           }
         },
-        include: { items: true }
+        include: { 
+          items: {
+            include: {
+              product: true,
+            }
+          }
+        }
       });
 
       if (items && Array.isArray(items)) {

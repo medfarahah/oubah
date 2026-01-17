@@ -36,6 +36,7 @@ export function ProductsManagement() {
           imageUrl: p.imageUrl,
           categories: p.categories || [],
           colors: p.colors || [],
+          stock: p.inventory?.quantity || 0,
         }));
         setProductsState(convertedProducts);
       } else {
@@ -108,6 +109,7 @@ export function ProductsManagement() {
           isNew: formData.isNew || false,
           sale: formData.sale || false,
           originalPrice: formData.originalPrice,
+          stock: formData.stock || 0,
         });
 
         if (response.success && response.data) {
@@ -129,6 +131,7 @@ export function ProductsManagement() {
           isNew: formData.isNew,
           sale: formData.sale,
           originalPrice: formData.originalPrice,
+          stock: formData.stock,
         });
 
         if (response.success && response.data) {
