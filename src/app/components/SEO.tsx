@@ -65,7 +65,7 @@ export function SEO({
     // Product-specific tags
     if (product) {
       updateMetaTag('product:price:amount', product.price.toString(), 'property');
-      updateMetaTag('product:price:currency', 'USD', 'property');
+      updateMetaTag('product:price:currency', product?.currency || 'DJF', 'property');
       updateMetaTag('product:availability', 'in stock', 'property');
       updateMetaTag('product:condition', 'new', 'property');
     }
@@ -106,7 +106,7 @@ export function SEO({
         offers: {
           '@type': 'Offer',
           url: url,
-          priceCurrency: 'USD',
+          priceCurrency: product?.currency || 'DJF',
           price: product.price,
           availability: 'https://schema.org/InStock',
           priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

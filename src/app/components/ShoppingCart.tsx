@@ -3,6 +3,7 @@ import { CartItem, Settings } from '../types';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useAuth } from '../auth';
 import { toast } from 'sonner';
+import { formatCurrency } from '../../lib/currency';
 
 interface ShoppingCartProps {
   settings: Settings;
@@ -136,20 +137,20 @@ export function ShoppingCart({
           <div className="border-t p-4 sm:p-6 space-y-3 sm:space-y-4 bg-white sticky bottom-0">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(subtotal, settings.currency)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Shipping</span>
-              <span className="font-medium">{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
+              <span className="font-medium">{shipping === 0 ? 'FREE' : formatCurrency(shipping, settings.currency)}</span>
             </div>
             {subtotal < settings.freeShippingThreshold && (
               <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-                Add ${(settings.freeShippingThreshold - subtotal).toFixed(2)} more for free shipping!
+                Add {formatCurrency(settings.freeShippingThreshold - subtotal, settings.currency)} more for free shipping!
               </p>
             )}
             <div className="flex justify-between text-base sm:text-lg font-semibold border-t pt-3 sm:pt-4">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{formatCurrency(total, settings.currency)}</span>
             </div>
             <button
               className="w-full bg-gray-900 text-white py-3 sm:py-4 hover:bg-amber-700 transition-colors text-sm sm:text-base font-semibold touch-manipulation"

@@ -59,7 +59,7 @@ function AppInner() {
     storeEmail: 'info@nuracollection.com',
     storePhone: '+252638596758',
     storeAddress: 'Djibouti',
-    currency: 'USD',
+    currency: 'DJF',
     taxRate: 0,
     freeShippingThreshold: 150,
     shippingCost: 15,
@@ -258,6 +258,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -282,6 +283,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -311,6 +313,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -334,6 +337,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -357,6 +361,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -380,6 +385,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
           </div>
@@ -409,7 +415,7 @@ function AppInner() {
               </div>
               <h3 className="text-xl mb-2">Fast Shipping</h3>
               <p className="text-gray-600">
-                Free express shipping on orders over $150 with tracking
+                Free express shipping on orders over {settings.currency === 'DJF' ? 'FD15,000' : `$${settings.freeShippingThreshold}`} with tracking
               </p>
             </div>
             <div>
@@ -495,6 +501,7 @@ function AppInner() {
                 onProductClick={handleProductClick}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={wishlistIds.includes(product.id)}
+                currency={settings.currency}
               />
             ))}
             {categoryProducts.length === 0 && (

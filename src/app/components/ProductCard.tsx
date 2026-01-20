@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Product } from '../types';
+import { formatCurrency } from '../../lib/currency';
 
 interface ProductCardProps {
   product: Product;
@@ -8,6 +9,7 @@ interface ProductCardProps {
   onProductClick: (product: Product) => void;
   onToggleWishlist?: (product: Product) => void;
   isWishlisted?: boolean;
+  currency?: string;
 }
 
 export function ProductCard({
@@ -16,6 +18,7 @@ export function ProductCard({
   onProductClick,
   onToggleWishlist,
   isWishlisted,
+  currency = 'DJF',
 }: ProductCardProps) {
   return (
     <div className="group cursor-pointer">
@@ -78,9 +81,9 @@ export function ProductCard({
         <h3 className="text-sm mb-1 text-gray-600 tracking-wide">{product.category}</h3>
         <h4 className="mb-2">{product.name}</h4>
         <div className="flex items-center gap-2">
-          <span className="font-medium">${product.price}</span>
+          <span className="font-medium">{formatCurrency(product.price, currency)}</span>
           {product.originalPrice && (
-            <span className="text-sm text-gray-400 line-through">${product.originalPrice}</span>
+            <span className="text-sm text-gray-400 line-through">{formatCurrency(product.originalPrice, currency)}</span>
           )}
         </div>
         {product.colors && product.colors.length > 0 && (

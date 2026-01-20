@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { api } from '../../../lib/api';
+import { formatCurrency } from '../../../lib/currency';
 
 export function ProductsManagement() {
   const [products, setProductsState] = useState<Product[]>([]);
@@ -309,7 +310,7 @@ export function ProductsManagement() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Price ($) *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Price (FD) *</label>
               <Input
                 type="number"
                 step="0.01"
@@ -320,7 +321,7 @@ export function ProductsManagement() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Original Price ($)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Original Price (FD)</label>
               <Input
                 type="number"
                 step="0.01"
@@ -740,10 +741,10 @@ export function ProductsManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">${product.price}</span>
+                        <span className="font-bold text-gray-900">{formatCurrency(product.price, 'DJF')}</span>
                         {product.originalPrice && (
                           <span className="text-sm text-gray-400 line-through">
-                            ${product.originalPrice}
+                            {formatCurrency(product.originalPrice, 'DJF')}
                           </span>
                         )}
                       </div>

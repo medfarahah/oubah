@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { addOrder } from '../data/orders';
 import { api } from '../../lib/api';
+import { formatCurrency } from '../../lib/currency';
 
 interface CheckoutProps {
   settings: Settings;
@@ -416,7 +417,7 @@ export function Checkout({
                       )}
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                        <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-medium">{formatCurrency(item.price * item.quantity, settings.currency)}</span>
                       </div>
                     </div>
                   </div>
@@ -453,21 +454,21 @@ export function Checkout({
                 <h4 className="font-semibold">Order Summary</h4>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(subtotal, settings.currency)}</span>
                 </div>
                 {settings.taxRate > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Tax ({settings.taxRate}%)</span>
-                    <span>${tax.toFixed(2)}</span>
+                    <span>{formatCurrency(tax, settings.currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'FREE' : formatCurrency(shipping, settings.currency)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold border-t pt-3">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{formatCurrency(total, settings.currency)}</span>
                 </div>
               </div>
             </div>
@@ -498,7 +499,7 @@ export function Checkout({
             {/* Order Summary (always visible) */}
             <div className="flex justify-between items-center pb-4 border-b">
               <span className="text-gray-600">Total</span>
-              <span className="text-2xl font-semibold">${total.toFixed(2)}</span>
+              <span className="text-2xl font-semibold">{formatCurrency(total, settings.currency)}</span>
             </div>
 
             <div className="flex gap-3">

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../auth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Settings } from '../types';
+import { formatCurrency } from '../../lib/currency';
 
 interface HeaderProps {
   settings: Settings;
@@ -45,7 +46,7 @@ export function Header({
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         {/* Top bar */}
         <div className="flex items-center justify-between py-2 text-xs sm:text-sm border-b border-gray-50">
-          <div className="text-gray-600 truncate">Free shipping on orders over ${settings.freeShippingThreshold}</div>
+          <div className="text-gray-600 truncate">Free shipping on orders over {formatCurrency(settings.freeShippingThreshold, settings.currency)}</div>
           <div className="hidden sm:flex gap-3 lg:gap-4 text-gray-600">
             <Link to="/about" className="hover:text-gray-900 transition-colors px-2 py-1">About</Link>
             <Link to="/contact" className="hover:text-gray-900 transition-colors px-2 py-1">Contact</Link>

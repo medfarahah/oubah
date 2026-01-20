@@ -23,7 +23,7 @@ const defaultSettings: Settings = {
   storeEmail: 'info@nura.com',
   storePhone: '+1 (555) 123-4567',
   storeAddress: '123 Fashion Street, New York, NY 10001',
-  currency: 'USD',
+  currency: 'DJF',
   taxRate: 8.5,
   freeShippingThreshold: 150,
   shippingCost: 15,
@@ -173,9 +173,10 @@ export function SettingsManagement() {
               onChange={(e) => handleChange('currency', e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
             >
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
+              <option value="DJF">DJF (FD) - Djibouti Franc</option>
+              <option value="USD">USD ($) - US Dollar</option>
+              <option value="EUR">EUR (€) - Euro</option>
+              <option value="GBP">GBP (£) - British Pound</option>
             </select>
           </div>
           <div>

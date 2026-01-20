@@ -57,7 +57,7 @@ export function TermsOfService() {
                         <li>You are making an offer to purchase products</li>
                         <li>We reserve the right to accept or decline your order</li>
                         <li>Payment is due at the time of purchase</li>
-                        <li>All prices are in USD unless otherwise stated</li>
+                        <li>All prices are in DJF (Djibouti Franc) unless otherwise stated</li>
                         <li>You are responsible for any applicable taxes and duties</li>
                     </ul>
 
